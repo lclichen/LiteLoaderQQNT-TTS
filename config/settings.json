@@ -1,0 +1,34 @@
+{
+    "$schema": "./settings_schema.json",
+    "host": "https://artrajz-vits-simple-api.hf.space/voice/vits",
+    "host_type": "vits",
+    "default_params": {
+        "vits": {
+            "source_key": "text",
+            "text": "合成测试",
+            "id": 0,
+            "format": "silk",
+            "lang": "auto",
+            "length": 1,
+            "noise": 0.33,
+            "noisew": 0.4,
+            "segment_size": 0,
+            "streaming": false
+        },
+        "hubert-vits": {
+            "source_key": "upload",
+            "upload": "",
+            "id": 0,
+            "format": "silk",
+            "length": 0,
+            "noise": 0,
+            "noisew": 0
+        },
+        "custom": {
+            "source_key": "text",
+            "text": "",
+            "format": "silk",
+            "pid": 1
+        }
+    }
+}

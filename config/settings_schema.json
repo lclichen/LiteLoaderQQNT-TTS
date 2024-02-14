@@ -1,0 +1,169 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "LiteLoaderQQNT Plugin TTS Settings",
+	"properties": {
+		"host": {
+			"type": "string",
+			"title": "TTS后端接口",
+			"description": "API地址链接中?前的全部内容"
+		},
+		"host_type": {
+			"type": "string",
+			"enum": [
+				"vits",
+				"hubert-vits",
+				"custom"
+			],
+			"title": "TTS接口类型"
+		},
+		"default_params": {
+			"title": "各类型接口的默认参数",
+			"type": "object",
+			"properties": {
+				"vits":{
+					"type": "object",
+					"title": "VITS接口默认参数",
+					"description": "",
+					"properties": {
+						"source_key": {
+							"type":"string",
+							"title": "可变参数的Key",
+							"enum": [
+								"text",
+								"upload"
+							]
+						},
+						"text":{
+							"type":"string",
+							"title":"Synthesized text",
+							"description": "Text needed for voice synthesis."
+						},
+						"id":{
+							"type":"integer",
+							"title":"Speaker ID",
+							"description": "The speaker ID."
+						},
+						"format":{
+							"type":"string",
+							"title":"Audio format",
+							"enum": [
+								"wav",
+								"ogg",
+								"silk",
+								"mp3",
+								"flac"
+							],
+							"description": "Support for wav,ogg,silk,mp3,flac"
+						},
+						"lang":{
+							"type":"string",
+							"title":"Text language",
+							"enum": [
+								"auto",
+								"zh",
+								"ja",
+								"mix"
+							],
+							"description": "The language of the text to be synthesized. Available options include auto, zh, ja, and mix. When lang=mix, the text should be wrapped in [ZH] or [JA].The default mode is auto, which automatically detects the language of the text"
+						},
+						"length":{
+							"type":"number",
+							"title":"Audio length",
+							"description": "Adjusts the length of the synthesized speech, which is equivalent to adjusting the speed of the speech. The larger the value, the slower the speed."
+						},
+						"noise":{
+							"type":"number",
+							"title":"Noise",
+							"description": "Sample noise, controlling the randomness of the synthesis."
+						},
+						"noisew":{
+							"type":"number",
+							"title":"SDP noise",
+							"description": "Stochastic Duration Predictor noise, controlling the length of phoneme pronunciation."
+						},
+						"segment_size":{
+							"type":"integer",
+							"title":"Segment Size",
+							"description": "Divide the text into paragraphs based on punctuation marks, and combine them into one paragraph when the length exceeds segment_size. If segment_size<=0, the text will not be divided into paragraphs."
+						},
+						"streaming":{
+							"type":"boolean",
+							"title":"Streaming response",
+							"description": "Streamed synthesized speech with faster initial response."
+						}
+					}
+				},
+				"hubert-vits":{
+					"type":"object",
+					"title": "HuBert-VITS接口默认参数",
+					"description": "",
+					"properties": {
+						"source_key": {
+							"type":"string",
+							"title": "可变参数的Key",
+							"enum": [
+								"text",
+								"upload"
+							]
+						},
+						"upload":{
+							"type":"string",
+							"title":"Uploaded Audio",
+							"description": "The audio file to be uploaded. It should be in wav or ogg format."
+						},
+						"id":{
+							"type":"integer",
+							"title":"Target speaker ID",
+							"description": "The target speaker ID."
+						},
+						"format":{
+							"type":"string",
+							"title":"Audio format",
+							"enum": [
+								"wav",
+								"ogg",
+								"silk"
+							],
+							"description": "Support for wav,ogg,silk"
+						},
+						"length":{
+							"type":"number",
+							"title":"Audio length",
+							"description": "Adjusts the length of the synthesized speech, which is equivalent to adjusting the speed of the speech. The larger the value, the slower the speed."
+						},
+						"noise":{
+							"type":"number",
+							"title":"Noise",
+							"description": "Sample noise, controlling the randomness of the synthesis."
+						},
+						"noisew":{
+							"type":"number",
+							"title":"SDP noise",
+							"description": "Stochastic Duration Predictor noise, controlling the length of phoneme pronunciation."
+						}
+					}
+				},
+				"custom":{
+					"type":"object",
+					"title": "自定义接口参数",
+					"description": "",
+					"properties": {
+						"source_key": {
+							"type":"string",
+							"title": "可变参数的Key",
+							"enum": [
+								"text",
+								"upload"
+							]
+						}
+					}
+				}
+			}
+		}
+	},
+	"required": [
+		"host",
+		"host_type",
+		"default_params"
+	]
+}

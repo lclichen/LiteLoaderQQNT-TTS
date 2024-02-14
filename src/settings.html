@@ -1,0 +1,82 @@
+<style>
+    .text_to_speech a {
+        color: var(--text-link);
+    }
+
+    .text_to_speech input {
+        align-self: normal;
+        flex: 1;
+        border-radius: 4px;
+        margin-right: 12px;
+        padding: 2px 4px;
+        transition: all 100ms ease-out;
+    }
+
+    .text_to_speech input:focus {
+        padding-left: 4px;
+        background-color: var(--overlay_active);
+    }
+
+    .text_to_speech .input-group {
+        display: flex;
+        flex-direction: row;
+        margin-top: 8px;
+    }
+
+    .text_to_speech .ops-btns>*:not(:last-child) {
+        margin-right: 4px;
+    }
+
+    /* 设置列表项宽度最大，而不是靠文本撑 */
+    .text_to_speech setting-item>div {
+        width: 100%;
+    }
+
+    /* 浅色模式 */
+    @media (prefers-color-scheme: light) {
+        .text_to_speech input {
+            color: black;
+        }
+    }
+
+    /* 深色模式 */
+    @media (prefers-color-scheme: dark) {
+        .text_to_speech input {
+            color: white;
+        }
+    }
+</style>
+
+<setting-section data-title="常规" class="enhancement">
+    <setting-panel>
+        <setting-list data-direction="column">
+            <setting-item data-direction="column">
+                <div>
+                    <setting-text>设置 TTS API 地址</setting-text>
+                    <setting-text data-type="secondary">API地址链接中?前的全部内容</setting-text>
+                    <div class="input-group">
+                        <input class="api-input" type="text" spellcheck="false">
+                        <div class="ops-btns">
+                            <setting-button data-type="secondary" class="reset">恢复默认</setting-button>
+                            <setting-button data-type="secondary" class="apply">立即应用</setting-button>
+                        </div>
+                    </div>
+                </div>
+            </setting-item>
+
+            <setting-item data-direction="column">
+                <div>
+                    <setting-text>设置 TTS API 配置类型</setting-text>
+                    <setting-text data-type="secondary">填入配置类型</setting-text>
+                    <div class="input-group">
+                        <input class="api-type-input" type="text" spellcheck="false">
+                        <div class="ops-btns">
+                            <setting-button data-type="secondary" class="api-type-input-reset">恢复默认</setting-button>
+                            <setting-button data-type="secondary" class="api-type-input-apply">立即应用</setting-button>
+                        </div>
+                    </div>
+                </div>
+            </setting-item>
+        </setting-list>
+    </setting-panel>
+</setting-section>
