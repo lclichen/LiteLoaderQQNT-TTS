@@ -12,6 +12,7 @@
 			"enum": [
 				"vits",
 				"hubert-vits",
+				"gptsovits",
 				"custom"
 			],
 			"title": "TTS接口类型"
@@ -20,6 +21,81 @@
 			"title": "各类型接口的默认参数",
 			"type": "object",
 			"properties": {
+				"gptsovits":{
+					"type": "object",
+					"title": "GPT-SoVITS接口默认参数",
+					"description": "",
+					"properties": {
+						"source_key": {
+							"type":"string",
+							"title": "可变参数的Key",
+							"enum": [
+								"text",
+								"upload"
+							]
+						},
+						"text":{
+							"type":"string",
+							"title":"Synthesized text",
+							"description": "Text needed for voice synthesis."
+						},
+						"id":{
+							"type":"integer",
+							"title":"Speaker ID",
+							"description": "The speaker ID."
+						},
+						"format":{
+							"type":"string",
+							"title":"Audio format",
+							"enum": [
+								"wav",
+								"ogg",
+								"silk",
+								"mp3",
+								"flac"
+							],
+							"description": "Support for wav,ogg,silk,mp3,flac"
+						},
+						"lang":{
+							"type":"string",
+							"title":"Text language",
+							"enum": [
+								"auto",
+								"all_zh",
+								"en",
+								"all_ja",
+								"zh",
+								"ja"
+							],
+							"description": "\"auto\" is the automatic language detection mode, which is also the default mode. However, it currently only supports recognizing the language of the entire text passage, and cannot distinguish each sentence."
+						},
+						"length":{
+							"type":"number",
+							"title":"Audio length",
+							"description": "Adjusts the length of the synthesized speech, which is equivalent to adjusting the speed of the speech. The larger the value, the slower the speed."
+						},
+						"rid":{
+							"type":"integer",
+							"title":"Reference Audio ID",
+							"description": "预设的参考音频编号，0则不使用参考音频."
+						},
+						"top_k":{
+							"type":"number",
+							"title":"top_k",
+							"description": "GPT采样参数，默认为5，无参考文本时不要太低."
+						},
+						"top_p":{
+							"type":"number",
+							"title":"top_p",
+							"description": "GPT采样参数，默认为1，无参考文本时不要太低."
+						},
+						"temp":{
+							"type":"number",
+							"title":"temperature",
+							"description": "GPT采样参数，默认为1，无参考文本时不要太低."
+						}
+					}
+				},
 				"vits":{
 					"type": "object",
 					"title": "VITS接口默认参数",

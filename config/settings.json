@@ -3,6 +3,18 @@
     "host": "https://artrajz-vits-simple-api.hf.space/voice/vits",
     "host_type": "vits",
     "default_params": {
+        "gptsovits": {
+            "source_key": "text",
+            "text": "合成测试",
+            "id": 0,
+            "format": "wav",
+            "lang": "auto",
+            "length": 1,
+            "rid": 0,
+            "top_k": 5,
+            "top_p": 1,
+            "temp": 1
+        },
         "vits": {
             "source_key": "text",
             "text": "合成测试",
@@ -27,7 +39,7 @@
         "custom": {
             "source_key": "text",
             "text": "",
-            "format": "silk",
+            "format": "wav",
             "pid": 1
         }
     }
