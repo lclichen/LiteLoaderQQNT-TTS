@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("text_to_speech", {
         "LiteLoader.text_to_speech.setSettings",
         content
     ),
-    // 监听主进程的保存文件响应
-    saveFile: (fileName,fileData) => ipcRenderer.invoke('LiteLoader.text_to_speech.saveFile', fileName, fileData)
+    // 保存渲染进程获取的数据到数据目录下
+    saveFile: (fileName, fileData) => ipcRenderer.invoke('LiteLoader.text_to_speech.saveFile', fileName, fileData),
+    // 转换本地文件格式并保存到数据目录下
+    convertAndSaveFile: (filePath) => ipcRenderer.invoke('LiteLoader.text_to_speech.convertAndSaveFile', filePath)
 });

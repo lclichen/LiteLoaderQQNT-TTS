@@ -7,7 +7,7 @@
             "source_key": "text",
             "text": "合成测试",
             "id": 0,
-            "format": "silk",
+            "format": "wav",
             "lang": "auto",
             "length": 1,
             "noise": 0.33,
@@ -19,7 +19,7 @@
             "source_key": "upload",
             "upload": "",
             "id": 0,
-            "format": "silk",
+            "format": "wav",
             "length": 0,
             "noise": 0,
             "noisew": 0

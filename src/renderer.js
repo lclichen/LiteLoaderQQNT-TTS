@@ -84,13 +84,14 @@ observeElement2(".chat-func-bar", function () {
         const content = document.querySelector('.ck-editor__editable');
         const sourceText = content.innerText;
         const settings = await text_to_speech.getSettings();
-        const buffer = await call_tts(sourceText,"zh",settings);
-        const result = await text_to_speech.saveFile(`tts.silk`, buffer);
+        const buffer = await call_tts(sourceText,"中文",settings);
+        const result = await text_to_speech.saveFile(`tts.${settings.default_params[settings.host_type].format}`, buffer);
+        // 这一步应该增加格式转换功能
         console.log(result);
         if (result.res == "success") {
             const elements = [
                 {
-                    type: "voice",
+                    type: "ptt",
                     file: result.file
                 }
             ];
@@ -99,6 +100,29 @@ observeElement2(".chat-func-bar", function () {
             console.log(result.msg);
         }
     });
+});
+
+document.addEventListener('drop', e => {
+    if (document.querySelector(".audio-msg-input") != undefined) {
+        e.dataTransfer.files.forEach(async file => {
+            const peer = await LLAPI.getPeer();
+            const result = await text_to_speech.convertAndSaveFile(file.path);
+            // 这一步应该增加格式转换功能
+            console.log(result);
+            if (result.res == "success") {
+                const elements = [
+                    {
+                        type: "ptt",
+                        file: result.file
+                    }
+                ];
+                LLAPI.sendMessage(peer, elements);
+            } else {
+                console.log(result.msg);
+            }
+            audiosender.deleteFile(path);
+        });
+    }
 });
 
 // 打开设置界面时触发

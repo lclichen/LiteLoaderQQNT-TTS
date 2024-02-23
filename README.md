@@ -2,17 +2,39 @@
 
 LiteLoaderQQNT 文本转语音插件
 
-需要用户自行填写TTS接口地址，目前仅支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，文本直接到音频的转换，同时要求后端支持[QQNT的silk格式](https://github.com/kn007/silk-v3-decoder/pull/85)。
+需要用户自行填写TTS接口地址，目前仅支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，在请求中发送文本直接获取音频文件响应流的转换。
 
-接口参数目前需要直接修改配置文件中的参数。
-QQNT的设置中只支持更换接口地址。
+如果向后端请求的音频格式在silk、wav、单声道 pcm_s16le 文件以外，则需要配置ffmpeg等用于格式转换。
+
+接口参数的变更目前需要直接修改配置文件中的参数。
+
+QQNT的设置中暂时只支持更换接口地址。
+
+## 使用方法
+
+1. 在编辑框中键入所希望进行转换的文本，点击编辑框上方的TTS按钮
+2. （Copy From Voice Sender）点击编辑框上方的语音图标，切换到发送语音界面，直接将音频文件拖入聊天窗口即可
+
+## 注意事项
+
+### TTS后端注意事项
+
+如果向后端请求的音频格式设置为silk文件的话：
+
+1. python环境下如果使用graiax-silkcoder的话建议安装[本人修改并重新编译的版本](https://github.com/lclichen/graiax-silkcoder/releases/tag/0.3.7)，以支持[QQNT的silk格式](https://github.com/kn007/silk-v3-decoder/pull/85)，并适应LLAPI。
+2. 其他环境请保证接口支持QQNT版本的silk格式输出，否则建议采用其他格式。
 
 ## 依赖
 
-LLAPI
+1. LLAPI>=1.4.0
+2. 将 [ffmpeg (包括 ffprobe)](https://ffmpeg.org) 添加至环境变量
 
 ## 参考
 
-整体结构参考了[DeepL插件](https://github.com/MUKAPP/LiteLoaderQQNT-DeepL/)的代码，非常感谢~
+1. 整体结构参考了[DeepL插件](https://github.com/MUKAPP/LiteLoaderQQNT-DeepL/)。
+
+2. 格式转换参考了[Audio-Sender插件]。
+
+****
 
 LiteLoaderQQNT本体：[LiteLoaderQQNT](https://github.com/mo-jinran/LiteLoaderQQNT)
