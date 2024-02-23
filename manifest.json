@@ -30,8 +30,7 @@
         "repo": "lclichen/LiteLoaderQQNT-TTS",
         "branch": "main",
         "release": {
-            "tag": "0.2.0",
-            "file": "LiteLoaderQQNT-TTS.zip"
+            "tag": "0.2.0"
         }
     }
 }
