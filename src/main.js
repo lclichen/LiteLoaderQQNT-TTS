@@ -9,11 +9,11 @@ function log(...args) {
     console.log(`[text_to_speech]`, ...args);
 }
 
-async function convertToPcm(file, fileOutput) {
+async function convertToWAV(file, fileOutput) {
     try {
-        var { stderr } = await exec(`ffmpeg -y -i "${ file }" -acodec pcm_s16le -f s16le -ac 1 "${ fileOutput }.pcm" -loglevel error`);
+        var { stderr } = await exec(`ffmpeg -y -i "${ file }" -acodec pcm_s16le -f s16le -ac 1 -ar 24000 "${ fileOutput }.wav" -loglevel error`);
         if (stderr) {
-            return `An error occurred while converting ${ file } to .pcm. Details: ${ stderr }`;
+            return `An error occurred while converting ${ file } to .wav. Details: ${ stderr }`;
         }
         var { stdout, stderr } = await exec(`ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=noprint_wrappers=1:nokey=1 "${ file }"`);
         if (stderr) {
@@ -74,13 +74,13 @@ ipcMain.handle(
             const bufferData = Buffer.from(fileData);
             fs.writeFileSync(filePath, bufferData);
             const ext = path.extname(filePath);
-            if (![".silk",".wav",".pcm"].includes(ext)) {
-                let error = await convertToPcm(filePath, filePath)
+            if (![".silk"].includes(ext)) {
+                let error = await convertToWAV(filePath, filePath)
                 if (error) {
                     log(error);
                     return {res: "error", msg: error};
                 }
-                return {res: "success", file: `${ filePath }.pcm`};
+                return {res: "success", file: `${ filePath }.wav`};
             }
             else {
                 return {res: "success", file: filePath};
@@ -100,17 +100,17 @@ ipcMain.handle(
             const fileName = path.basename(filePath);
             const fileNewPath = path.join(data_path, fileName);
             const ext = path.extname(filePath);
-            if (![".silk",".wav",".pcm"].includes(ext)) {
-                let error = await convertToPcm(filePath, fileNewPath)
+            if (![".silk"].includes(ext)) {
+                let error = await convertToWAV(filePath, fileNewPath)
                 if (error) {
                     log(error);
                     return {res: "error", msg: error};
                 }
-                return {res: "success", file: `${ fileNewPath }.pcm`};
+                return {res: "success", file: `${ fileNewPath }.wav`};
             }
             else {
                 fs.copyFileSync(filePath, fileNewPath);
-                return {res: "success", file: fileNewPath};
+                return {res: "success", file: filePath};
             }
         } catch (error) {
             log(error);
