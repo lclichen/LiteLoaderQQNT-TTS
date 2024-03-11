@@ -26,7 +26,8 @@ async function convertToWAV(file, fileOutput) {
 
 const plugin_path = LiteLoader.plugins["text_to_speech"].path.plugin;
 const data_path = LiteLoader.plugins.text_to_speech.path.data;
-const settingsPath = path.join(plugin_path,"config/settings.json")
+const settingsSamplePath = path.join(plugin_path,"config/settings.json")
+const settingsPath = path.join(data_path,"settings.json")
 
 // 创建窗口时触发
 module.exports.onBrowserWindowCreated = window => {
@@ -34,6 +35,10 @@ module.exports.onBrowserWindowCreated = window => {
     // 创建数据存储文件夹
     if (!fs.existsSync(data_path)) {
         fs.mkdirSync(data_path, { recursive: true });
+    }
+    // 在数据存储文件夹中创建配置文件
+    if (!fs.existsSync(settingsPath)) {
+        fs.copyFileSync(settingsSamplePath, settingsPath)
     }
 }
 
@@ -59,6 +64,18 @@ ipcMain.handle(
         try {
             const new_config = JSON.stringify(content);
             fs.writeFileSync(settingsPath, new_config, "utf-8");
+        } catch (error) {
+            log(error);
+        }
+    }
+);
+
+ipcMain.handle(
+    // 打开配置文件所在文件夹/打开配置文件
+    "LiteLoader.text_to_speech.openSettings",
+    (event, message) => {
+        try {
+            shell.showItemInFolder(settingsPath);
         } catch (error) {
             log(error);
         }

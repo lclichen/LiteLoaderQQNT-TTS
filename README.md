@@ -4,6 +4,8 @@ LiteLoaderQQNT 文本转语音插件
 
 需要用户自行填写TTS接口地址，目前仅支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，在请求中发送文本直接获取音频文件响应流的转换。
 
+gptsovits的接口格式临时根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVits后端API接口。
+
 如果向后端请求的音频格式在silk、wav、单声道 pcm_s16le 文件以外，则需要配置ffmpeg等用于格式转换。
 
 接口参数的变更目前需要直接修改配置文件中的参数。
@@ -38,3 +40,16 @@ QQNT的设置中暂时只支持更换接口地址。
 ****
 
 LiteLoaderQQNT本体：[LiteLoaderQQNT](https://github.com/mo-jinran/LiteLoaderQQNT)
+
+## ChangeLog
+
+1. 修复明暗模式的问题
+2. 修改gpt-sovits的默认配置
+3. 配置文件将储存到数据目录中，避免被更新覆盖
+4. 在设置中增加说明
+
+## TODO
+
+1. 支持调用Windows系统语音
+2. 更合理的配置文件
+3. 在QQ设置中进行动态的配置设置
