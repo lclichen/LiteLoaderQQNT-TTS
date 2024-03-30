@@ -7,6 +7,7 @@ LiteLoaderQQNT 文本转语音插件
 gptsovits的接口格式临时根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVits后端API接口。
 
 如果向后端请求的音频格式在silk、wav、单声道 pcm_s16le 文件以外，则需要配置ffmpeg等用于格式转换。
+**注意，即使后端不解析format参数，也需要保留format参数用于模块解析后端返回的音频格式**
 
 接口参数的变更目前需要直接修改配置文件中的参数。
 
@@ -47,6 +48,7 @@ LiteLoaderQQNT本体：[LiteLoaderQQNT](https://github.com/mo-jinran/LiteLoaderQ
 2. 修改gpt-sovits的默认配置
 3. 配置文件将储存到数据目录中，避免被更新覆盖
 4. 在设置中增加说明
+5. 增加了[TTS for GPT-soVITS](https://www.yuque.com/xter/zibxlp)的默认配置 `ttsforgptsovits`，暂未加入更新中，如有需求可自行编辑。
 
 ## TODO
 
