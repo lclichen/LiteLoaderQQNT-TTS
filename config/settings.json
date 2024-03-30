@@ -6,14 +6,8 @@
         "gptsovits": {
             "source_key": "text",
             "text": "先帝创业未半而中道崩殂，今天下三分，益州疲弊，此诚危急存亡之秋也。",
-            // "id": 0,
             "format": "wav",
-            "text_language": "zh"//,
-            // "length": 1,
-            // "rid": 0,
-            // "top_k": 5,
-            // "top_p": 1,
-            // "temp": 1
+            "text_language": "zh"
         },
         "vits": {
             "source_key": "text",

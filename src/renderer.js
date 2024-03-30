@@ -1,24 +1,31 @@
-// 运行在 Electron 渲染进程 下的页面脚本
 const plugin_path = LiteLoader.plugins["text_to_speech"].path.plugin;
+const logger = {
+    info: function (...args) {
+        console.log(`[Text_to_speech]`, ...args);
+    },
+    warn: function (...args) {
+        console.warn(`[Text_to_speech]`, ...args);
+    },
+    error: function (...args) {
+        console.error(`[Text_to_speech]`, ...args);
+        alert(`[Text_to_speech]` + args.join(" "));
+    }
+};
 
-function log(...args) {
-    console.log(`[text_to_speech]`, ...args);
-}
-
-function call_tts(source_text, target, settingsCache) {
+function call_tts(source_text, target, optionsCache) {
     try {
-        log("转换文本：", source_text, "到(语言)：", target);
-        console.log(settingsCache);
-        let params = settingsCache.default_params[settingsCache.host_type];
+        logger.info("转换文本：", source_text, "到(语言)：", target);
+        logger.info("optionsCache: ", optionsCache);
+        let params = optionsCache.default_params[optionsCache.host_type];
         params[params.source_key] = source_text;
-        return fetch(`${settingsCache.host}?` + new URLSearchParams(params)).then((response)=>{
-            if (!response.ok){
+        return fetch(`${optionsCache.host}?` + new URLSearchParams(params)).then((response) => {
+            if (!response.ok) {
                 throw new Error(`HTTP error, status = ${response.status}`);
             }
             return response.arrayBuffer();
         })
     } catch (error) {
-        log("[转换出错]", error);
+        logger.error("[转换出错]", error);
     }
 }
 
@@ -29,13 +36,13 @@ function observeElement(selector, callback, callbackEnable = true, interval = 10
             if (element) {
                 if (callbackEnable) {
                     callback();
-                    // log("已检测到", selector);
+                    // logger.info("已检测到", selector);
                 }
                 clearInterval(timer);
             }
         }, interval);
     } catch (error) {
-        log("[检测元素错误]", error);
+        logger.error("[检测元素错误]", error);
     }
 }
 
@@ -47,12 +54,12 @@ function observeElement2(selector, callback, callbackEnable = true, interval = 1
             if (element) {
                 if (callbackEnable) {
                     callback();
-                    // log("已检测到", selector);
+                    // logger.info("已检测到", selector);
                 }
             }
         }, interval);
     } catch (error) {
-        log("[检测元素错误]", error);
+        logger.error("[检测元素错误]", error);
     }
 }
 
@@ -84,11 +91,11 @@ observeElement2(".chat-func-bar", function () {
         const peer = await LLAPI.getPeer();
         const content = document.querySelector('.ck-editor__editable');
         const sourceText = content.innerText;
-        const settings = await text_to_speech.getSettings();
-        const buffer = await call_tts(sourceText,"中文",settings);
-        const result = await text_to_speech.saveFile(`tts.${settings.default_params[settings.host_type].format}`, buffer);
+        const options = await text_to_speech.getOptions();
+        const buffer = await call_tts(sourceText, "中文", options);
+        const result = await text_to_speech.saveFile(`tts.${options.default_params[options.host_type].format}`, buffer);
         // 这一步应该增加格式转换功能
-        console.log(result);
+        logger.info(result);
         if (result.res == "success") {
             const elements = [
                 {
@@ -98,7 +105,7 @@ observeElement2(".chat-func-bar", function () {
             ];
             LLAPI.sendMessage(peer, elements);
         } else {
-            console.log(result.msg);
+            logger.warn(result.msg);
         }
     });
 });
@@ -109,7 +116,7 @@ document.addEventListener('drop', e => {
             const peer = await LLAPI.getPeer();
             const result = await text_to_speech.convertAndSaveFile(file.path);
             // 这一步应该增加格式转换功能
-            console.log(result);
+            logger.info(result);
             if (result.res == "success") {
                 const elements = [
                     {
@@ -119,7 +126,7 @@ document.addEventListener('drop', e => {
                 ];
                 LLAPI.sendMessage(peer, elements);
             } else {
-                console.log(result.msg);
+                logger.warn(result.msg);
             }
             audiosender.deleteFile(path);
         });
@@ -141,21 +148,21 @@ export const onSettingWindowCreated = async view => {
     });
 
     // 获取设置
-    
-    let settings = await text_to_speech.getSettings();
 
-    const apiOpenSettings = view.querySelector(".text_to_speech .open");
-    const apiReloadSettings = view.querySelector(".text_to_speech .reload");
+    let options = await LiteLoader.api.config.get("config.json");
+
+    const apiOpenOptions = view.querySelector(".text_to_speech .open");
+    const apiReloadOptions = view.querySelector(".text_to_speech .reload");
 
 
-    apiOpenSettings.addEventListener("click", () => {
-        text_to_speech.openSettings();
+    apiOpenOptions.addEventListener("click", () => {
+        text_to_speech.openOptions();
     });
 
-    apiReloadSettings.addEventListener("click", async () => {
-        settings = await text_to_speech.getSettings();
-        api_input.value = settings.host;
-        apiType.value = settings.host_type;
+    apiReloadOptions.addEventListener("click", async () => {
+        options = await LiteLoader.api.config.get("config.json");
+        api_input.value = options.host;
+        apiType.value = options.host_type;
     });
 
     const api_input = view.querySelector(".text_to_speech .api-input");
@@ -163,20 +170,18 @@ export const onSettingWindowCreated = async view => {
     const apply = view.querySelector(".text_to_speech .apply");
 
     // 设置默认值
-    api_input.value = settings.host;
+    api_input.value = JSON.stringify(options.host);
 
-    reset.addEventListener("click", () => {
+    reset.addEventListener("click", async () => {
         api_input.value = "https://artrajz-vits-simple-api.hf.space/voice/vits";
-        settings.host = api_input.value;
-        text_to_speech.setSettings(settings);
-        // JS弹出对话框提示已恢复默认 API
+        options.host = api_input.value;
+        await LiteLoader.api.config.set("config.json", options);
         alert("已恢复默认 API");
     });
 
-    apply.addEventListener("click", () => {
-        settings.host = api_input.value;
-        text_to_speech.setSettings(settings);
-        // JS弹出对话框提示已应用新 API
+    apply.addEventListener("click", async () => {
+        options.host = api_input.value;
+        await LiteLoader.api.config.set("config.json", options);
         alert("已应用新 API");
     });
 
@@ -185,23 +190,23 @@ export const onSettingWindowCreated = async view => {
     const apiType_reset = view.querySelector(".text_to_speech .api-type-input-reset");
 
     // 设置默认值
-    apiType.value = settings.host_type;
+    apiType.value = options.host_type;
 
-    apiType_apply.addEventListener("click", () => {
-        settings.host_type = apiType.value;
-        text_to_speech.setSettings(settings);
+    apiType_apply.addEventListener("click", async () => {
+        options.host_type = apiType.value;
+        await LiteLoader.api.config.set("config.json", options);
         alert("已设置API参数类型");
     });
 
-    apiType_reset.addEventListener("click", () => {
+    apiType_reset.addEventListener("click", async () => {
         apiType.value = "vits";
-        settings.host_type = "vits";
-        text_to_speech.setSettings(settings);
+        options.host_type = "vits";
+        await LiteLoader.api.config.set("config.json", options);
         alert("已恢复默认API参数类型");
     });
 
     // 下面是针对各TTS配置类型的设置
-    // const default_param = settings.default_params[settings.host_type]
+    // const default_param = options.default_params[options.host_type]
 
     // 首先要根据setting来把配置变成网页中的表单
     // 其次要限定表单内容？

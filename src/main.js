@@ -1,83 +1,72 @@
-// 运行在 Electron 主进程 下的插件入口
 const { ipcMain } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const util = require('util');
 const exec = util.promisify(require("child_process").exec);
-
-function log(...args) {
-    console.log(`[text_to_speech]`, ...args);
-}
+const logger = {
+    info: function (...args) {
+        console.log(`[Text_to_speech]`, ...args);
+    },
+    warn: function (...args) {
+        console.warn(`[Text_to_speech]`, ...args);
+    },
+    error: function (...args) {
+        console.error(`[Text_to_speech]`, ...args);
+        alert(`[Text_to_speech]` + args.join(" "));
+    }
+};
 
 async function convertToWAV(file, fileOutput) {
     try {
-        var { stderr } = await exec(`ffmpeg -y -i "${ file }" -acodec pcm_s16le -f s16le -ac 1 -ar 24000 "${ fileOutput }.wav" -loglevel error`);
+        var { stderr } = await exec(`ffmpeg -y -i "${file}" -acodec pcm_s16le -f s16le -ac 1 -ar 24000 "${fileOutput}.wav" -loglevel error`);
         if (stderr) {
-            return `An error occurred while converting ${ file } to .wav. Details: ${ stderr }`;
+            return `An error occurred while converting ${file} to .wav. Details: ${stderr}`;
         }
-        var { stdout, stderr } = await exec(`ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=noprint_wrappers=1:nokey=1 "${ file }"`);
+        var { stdout, stderr } = await exec(`ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=noprint_wrappers=1:nokey=1 "${file}"`);
         if (stderr) {
-            return `An error occurred while obtaining the sample rate. Details: ${ stderr }`;
+            return `An error occurred while obtaining the sample rate. Details: ${stderr}`;
         }
     } catch (error) {
-        return `An unknown error occurred. Details: ${ error }`;
+        return `An unknown error occurred. Details: ${error}`;
     }
 }
 
-const plugin_path = LiteLoader.plugins["text_to_speech"].path.plugin;
-const data_path = LiteLoader.plugins.text_to_speech.path.data;
-const settingsSamplePath = path.join(plugin_path,"config/settings.json")
-const settingsPath = path.join(data_path,"settings.json")
+const simpleFile = path.join(LiteLoader.plugins.text_to_speech.path.plugin, "config", "settings.json")
+const configFile = path.join(LiteLoader.plugins.text_to_speech.path.data, "config.json")
+const dataPath = LiteLoader.plugins.text_to_speech.path.data;
 
-// 创建窗口时触发
-module.exports.onBrowserWindowCreated = window => {
-    // window 为 Electron 的 BrowserWindow 实例
-    // 创建数据存储文件夹
-    if (!fs.existsSync(data_path)) {
-        fs.mkdirSync(data_path, { recursive: true });
+module.exports.onBrowserWindowCreated = (window) => {
+    if (!fs.existsSync(dataPath)) {
+        fs.mkdirSync(dataPath, { recursive: true });
     }
-    // 在数据存储文件夹中创建配置文件
-    if (!fs.existsSync(settingsPath)) {
-        fs.copyFileSync(settingsSamplePath, settingsPath)
+    if (!fs.existsSync(configFile)) {
+        fs.copyFileSync(simpleFile, configFile);
     }
-}
+};
 
 ipcMain.handle(
     // 读取配置文件
-    "LiteLoader.text_to_speech.getSettings",
+    "LiteLoader.text_to_speech.getOptions",
     (event, message) => {
         try {
-            const data = fs.readFileSync(settingsPath, "utf-8");
+            const data = fs.readFileSync(configFile, "utf-8");
             const config = JSON.parse(data);
             return config;
         } catch (error) {
-            log(error);
+            logger.error(error);
             return {};
         }
     }
 );
 
 ipcMain.handle(
-    // 保存配置文件
-    "LiteLoader.text_to_speech.setSettings",
-    (event, content) => {
-        try {
-            const new_config = JSON.stringify(content);
-            fs.writeFileSync(settingsPath, new_config, "utf-8");
-        } catch (error) {
-            log(error);
-        }
-    }
-);
-
-ipcMain.handle(
     // 打开配置文件所在文件夹/打开配置文件
-    "LiteLoader.text_to_speech.openSettings",
-    (event, message) => {
+    "LiteLoader.text_to_speech.openOptions",
+    () => {
         try {
-            shell.showItemInFolder(settingsPath);
+            LiteLoader.api.openPath(configFile);
         } catch (error) {
-            log(error);
+            logger.error(error);
         }
     }
 );
@@ -87,24 +76,24 @@ ipcMain.handle(
     'LiteLoader.text_to_speech.saveFile',
     async (event, fileName, fileData) => {
         try {
-            const filePath = path.join(data_path, fileName);
+            const filePath = path.join(dataPath, fileName);
             const bufferData = Buffer.from(fileData);
             fs.writeFileSync(filePath, bufferData);
             const ext = path.extname(filePath);
             if (![".silk"].includes(ext)) {
                 let error = await convertToWAV(filePath, filePath)
                 if (error) {
-                    log(error);
-                    return {res: "error", msg: error};
+                    logger.error(error);
+                    return { res: "error", msg: error };
                 }
-                return {res: "success", file: `${ filePath }.wav`};
+                return { res: "success", file: `${filePath}.wav` };
             }
             else {
-                return {res: "success", file: filePath};
+                return { res: "success", file: filePath };
             }
         } catch (error) {
-            log(error);
-            return {res: "error", msg: error};
+            logger.error(error);
+            return { res: "error", msg: error };
         }
     }
 )
@@ -115,23 +104,23 @@ ipcMain.handle(
     async (event, filePath) => {
         try {
             const fileName = path.basename(filePath);
-            const fileNewPath = path.join(data_path, fileName);
+            const fileNewPath = path.join(dataPath, fileName);
             const ext = path.extname(filePath);
             if (![".silk"].includes(ext)) {
                 let error = await convertToWAV(filePath, fileNewPath)
                 if (error) {
-                    log(error);
-                    return {res: "error", msg: error};
+                    logger.error(error);
+                    return { res: "error", msg: error };
                 }
-                return {res: "success", file: `${ fileNewPath }.wav`};
+                return { res: "success", file: `${fileNewPath}.wav` };
             }
             else {
                 fs.copyFileSync(filePath, fileNewPath);
-                return {res: "success", file: filePath};
+                return { res: "success", file: filePath };
             }
         } catch (error) {
-            log(error);
-            return {res: "error", msg: error};
+            logger.error(error);
+            return { res: "error", msg: error };
         }
     }
 )
