@@ -4,8 +4,8 @@
     "type": "extension",
     "name": "文本转语音",
     "slug": "text_to_speech",
-    "description": "可将输入字符转为语音发送。",
-    "version": "0.3.0",
+    "description": "基于TTS接口(vits、GPT-SoVits等)，将输入字符转为语音发送。",
+    "version": "0.4.0",
     "icon": "./icon.png",
     "authors": [
         {
@@ -30,7 +30,7 @@
         "repo": "lclichen/LiteLoaderQQNT-TTS",
         "branch": "main",
         "release": {
-            "tag": "0.3.0"
+            "tag": "0.4.0"
         }
     }
 }

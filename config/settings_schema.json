@@ -97,90 +97,90 @@
 						}
 					}
 				},
-				"ttsforgptsovits":{		
-					"type": "object",		
-					"title": "TTS for GPT-SoVITS接口默认参数 https://www.yuque.com/xter/zibxlp",		
-					"description": "",		
-					"properties": {		
-						"source_key": {		
-							"type":"string",		
-							"title": "可变参数的Key",		
-							"enum": [		
-								"text",		
-								"upload"		
-							]		
-						},		
-						"text":{		
-							"type":"string",		
-							"title":"合成文本",		
-							"description": "要转换的文本，建议进行URL编码。"		
-						},		
-						"cha_name":{		
-							"type":"string",		
-							"title":"Speaker ID",		
-							"description": "角色文件夹名称，注意大小写、全半角、语言。"		
-						},		
-						"character_emotion":{		
-							"type":"string",		
-							"title":"Speaker Emotion",		
-							"description": "角色情感，需为角色实际支持的情感，否则将调用默认情感。"		
-						},		
-						"format":{		
-							"type":"string",		
-							"title":"Audio format",		
-							"enum": [		
-								"wav",		
-								"ogg",		
-								"silk",		
-								"mp3",		
-								"flac"		
-							],		
-							"description": "Support for wav,ogg,silk,mp3,flac"		
-						},		
-						"text_language":{		
-							"type":"string",		
-							"title":"文本语言",		
-							"enum": [		
-								"中文",		
-								"英文",		
-								"日文",		
-								"中英混合",		
-								"日英混合",		
-								"多语种混合"		
-							],		
-							"description": "文本语言（中文、英文、日文、中英混合、日英混合、多语种混合），默认为多语种混合。"		
-						},		
-						"top_k":{		
-							"type":"number",		
-							"title":"top_k",		
-							"description": "GPT采样参数，默认为5，无参考文本时不要太低."		
-						},		
-						"top_p":{		
-							"type":"number",		
-							"title":"top_p",		
-							"description": "GPT采样参数，默认为1，无参考文本时不要太低."		
-						},		
-						"temperature":{		
-							"type":"number",		
-							"title":"temperature",		
-							"description": "GPT采样参数，默认为1，无参考文本时不要太低."		
-						},		
-						"batch_size":{		
-							"type":"integer",		
-							"title":"批量大小",		
-							"description": "一次性几个batch，电脑牛逼一些可以开大点，会加速很多，整数，默认为1"		
-						},		
-						"speed":{		
-							"type":"number",		
-							"title":"语速",		
-							"description": "语速，默认为1.0"		
-						},		
-						"save_temp":{		
-							"type":"boolean",		
-							"title":"是否保存临时文件",		
-							"description": "是否保存临时文件，为true时，后端会保存生成的音频，下次相同请求会直接返回该数据，默认为false。"		
-						}		
-					}		
+				"ttsforgptsovits":{
+					"type": "object",
+					"title": "TTS for GPT-SoVITS接口默认参数 https://www.yuque.com/xter/zibxlp",
+					"description": "",
+					"properties": {
+						"source_key": {
+							"type":"string",
+							"title": "可变参数的Key",
+							"enum": [
+								"text",
+								"upload"
+							]
+						},
+						"text":{
+							"type":"string",
+							"title":"合成文本",
+							"description": "要转换的文本，建议进行URL编码。"
+						},
+						"cha_name":{
+							"type":"string",
+							"title":"Speaker ID",
+							"description": "角色文件夹名称，注意大小写、全半角、语言。"
+						},
+						"character_emotion":{
+							"type":"string",
+							"title":"Speaker Emotion",
+							"description": "角色情感，需为角色实际支持的情感，否则将调用默认情感。"
+						},
+						"format":{
+							"type":"string",
+							"title":"Audio format",
+							"enum": [
+								"wav",
+								"ogg",
+								"silk",
+								"mp3",
+								"flac"
+							],
+							"description": "Support for wav,ogg,silk,mp3,flac"
+						},
+						"text_language":{
+							"type":"string",
+							"title":"文本语言",
+							"enum": [
+								"中文",
+								"英文",
+								"日文",
+								"中英混合",
+								"日英混合",
+								"多语种混合"
+							],
+							"description": "文本语言（中文、英文、日文、中英混合、日英混合、多语种混合），默认为多语种混合。"
+						},
+						"top_k":{
+							"type":"number",
+							"title":"top_k",
+							"description": "GPT采样参数，默认为5，无参考文本时不要太低."
+						},
+						"top_p":{
+							"type":"number",
+							"title":"top_p",
+							"description": "GPT采样参数，默认为1，无参考文本时不要太低."
+						},
+						"temperature":{
+							"type":"number",
+							"title":"temperature",
+							"description": "GPT采样参数，默认为1，无参考文本时不要太低."
+						},
+						"batch_size":{
+							"type":"integer",
+							"title":"批量大小",
+							"description": "一次性几个batch，电脑牛逼一些可以开大点，会加速很多，整数，默认为1"
+						},
+						"speed":{
+							"type":"number",
+							"title":"语速",
+							"description": "语速，默认为1.0"
+						},
+						"save_temp":{
+							"type":"boolean",
+							"title":"是否保存临时文件",
+							"description": "是否保存临时文件，为true时，后端会保存生成的音频，下次相同请求会直接返回该数据，默认为false。"
+						}
+					}
 				},
 				"vits":{
 					"type": "object",

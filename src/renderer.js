@@ -1,4 +1,6 @@
-const plugin_path = LiteLoader.plugins["text_to_speech"].path.plugin;
+// 运行在 Electron 渲染进程 下的页面脚本
+const pluginPath = LiteLoader.plugins["text_to_speech"].path.plugin;
+
 const logger = {
     info: function (...args) {
         console.log(`[Text_to_speech]`, ...args);
@@ -12,12 +14,12 @@ const logger = {
     }
 };
 
-function call_tts(source_text, target, optionsCache) {
+function callTTS(sourceText, targetLang, optionsCache) {
     try {
-        logger.info("转换文本：", source_text, "到(语言)：", target);
+        logger.info("转换文本：", sourceText, "到(语言)：", targetLang);
         logger.info("optionsCache: ", optionsCache);
         let params = optionsCache.default_params[optionsCache.host_type];
-        params[params.source_key] = source_text;
+        params[params.source_key] = sourceText;
         return fetch(`${optionsCache.host}?` + new URLSearchParams(params)).then((response) => {
             if (!response.ok) {
                 throw new Error(`HTTP error, status = ${response.status}`);
@@ -81,7 +83,7 @@ observeElement2(".chat-func-bar", function () {
     barIcon.querySelector("#id-func-bar-expression").id = "tts-bar-icon";
     // 将svg替换为上面的svg
     barIcon.querySelector("svg").outerHTML = icon;
-    // 将aria-label的值替换为发送TTS消息
+    // 将aria-label的值替换为发送TTS消息，似乎不会生效，以后再改
     barIcon.querySelector("#tts-bar-icon").setAttribute("aria-label", "发送TTS消息");
     // 将barIcon添加到iconBarLeft的最后
     iconBarLeft.appendChild(barIcon);
@@ -91,8 +93,16 @@ observeElement2(".chat-func-bar", function () {
         const peer = await LLAPI.getPeer();
         const content = document.querySelector('.ck-editor__editable');
         const sourceText = content.innerText;
+        var noticeElement = document.createElement('div');
+        noticeElement.className = "q-tooltips__content q-tooltips__bottom";
+        noticeElement.style = "bottom: -31px; transform: translateX(-50%); left: 50%;";
+        var noticeElementChild = document.createElement('div');
+        noticeElementChild.className = "primary-content"
+        noticeElementChild.textContent = "转换中..."
+        noticeElement.appendChild(noticeElementChild)
+        barIcon.firstChild.appendChild(noticeElement)
         const options = await text_to_speech.getOptions();
-        const buffer = await call_tts(sourceText, "中文", options);
+        const buffer = await callTTS(sourceText, "中文", options);
         const result = await text_to_speech.saveFile(`tts.${options.default_params[options.host_type].format}`, buffer);
         // 这一步应该增加格式转换功能
         logger.info(result);
@@ -107,6 +117,7 @@ observeElement2(".chat-func-bar", function () {
         } else {
             logger.warn(result.msg);
         }
+        barIcon.firstChild.removeChild(noticeElement)
     });
 });
 
@@ -135,7 +146,7 @@ document.addEventListener('drop', e => {
 
 // 打开设置界面时触发
 export const onSettingWindowCreated = async view => {
-    const html_file_path = `local:///${plugin_path}/src/settings.html`;
+    const html_file_path = `local:///${pluginPath}/src/settings.html`;
     const htmlText = await (await fetch(html_file_path)).text()
     view.insertAdjacentHTML('afterbegin', htmlText)
 
@@ -148,8 +159,8 @@ export const onSettingWindowCreated = async view => {
     });
 
     // 获取设置
-
-    let options = await LiteLoader.api.config.get("config.json");
+    
+    let options = await LiteLoader.api.config.get("text_to_speech");
 
     const apiOpenOptions = view.querySelector(".text_to_speech .open");
     const apiReloadOptions = view.querySelector(".text_to_speech .reload");
@@ -160,7 +171,7 @@ export const onSettingWindowCreated = async view => {
     });
 
     apiReloadOptions.addEventListener("click", async () => {
-        options = await LiteLoader.api.config.get("config.json");
+        options = await LiteLoader.api.config.get("text_to_speech");
         api_input.value = options.host;
         apiType.value = options.host_type;
     });
@@ -175,13 +186,14 @@ export const onSettingWindowCreated = async view => {
     reset.addEventListener("click", async () => {
         api_input.value = "https://artrajz-vits-simple-api.hf.space/voice/vits";
         options.host = api_input.value;
-        await LiteLoader.api.config.set("config.json", options);
+        // 默认存储的文件即为data目录中的config.json
+        await LiteLoader.api.config.set("text_to_speech", options);
         alert("已恢复默认 API");
     });
 
     apply.addEventListener("click", async () => {
         options.host = api_input.value;
-        await LiteLoader.api.config.set("config.json", options);
+        await LiteLoader.api.config.set("text_to_speech", options);
         alert("已应用新 API");
     });
 
@@ -194,14 +206,14 @@ export const onSettingWindowCreated = async view => {
 
     apiType_apply.addEventListener("click", async () => {
         options.host_type = apiType.value;
-        await LiteLoader.api.config.set("config.json", options);
+        await LiteLoader.api.config.set("text_to_speech", options);
         alert("已设置API参数类型");
     });
 
     apiType_reset.addEventListener("click", async () => {
         apiType.value = "vits";
         options.host_type = "vits";
-        await LiteLoader.api.config.set("config.json", options);
+        await LiteLoader.api.config.set("text_to_speech", options);
         alert("已恢复默认API参数类型");
     });
 

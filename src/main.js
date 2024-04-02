@@ -1,8 +1,10 @@
+// 运行在 Electron 主进程 下的插件入口
 const { ipcMain } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const util = require('util');
 const exec = util.promisify(require("child_process").exec);
+
 const logger = {
     info: function (...args) {
         console.log(`[Text_to_speech]`, ...args);
@@ -12,7 +14,7 @@ const logger = {
     },
     error: function (...args) {
         console.error(`[Text_to_speech]`, ...args);
-        alert(`[Text_to_speech]` + args.join(" "));
+        // alert(`[Text_to_speech]` + args.join(" "));
     }
 };
 
@@ -31,14 +33,16 @@ async function convertToWAV(file, fileOutput) {
     }
 }
 
-const simpleFile = path.join(LiteLoader.plugins.text_to_speech.path.plugin, "config", "settings.json")
-const configFile = path.join(LiteLoader.plugins.text_to_speech.path.data, "config.json")
+const simpleFile = path.join(LiteLoader.plugins.text_to_speech.path.plugin, "config/settings.json");
 const dataPath = LiteLoader.plugins.text_to_speech.path.data;
+const configFile = path.join(LiteLoader.plugins.text_to_speech.path.data, "config.json");
 
 module.exports.onBrowserWindowCreated = (window) => {
+    // 创建数据文件夹
     if (!fs.existsSync(dataPath)) {
         fs.mkdirSync(dataPath, { recursive: true });
     }
+    // 在数据文件夹中创建配置文件
     if (!fs.existsSync(configFile)) {
         fs.copyFileSync(simpleFile, configFile);
     }
@@ -64,7 +68,7 @@ ipcMain.handle(
     "LiteLoader.text_to_speech.openOptions",
     () => {
         try {
-            LiteLoader.api.openPath(configFile);
+            LiteLoader.api.openPath(dataPath);
         } catch (error) {
             logger.error(error);
         }
