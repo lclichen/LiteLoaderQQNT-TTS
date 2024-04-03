@@ -166,8 +166,8 @@ export const onSettingWindowCreated = async view => {
     const apiReloadOptions = view.querySelector(".text_to_speech .reload");
 
 
-    apiOpenOptions.addEventListener("click", () => {
-        text_to_speech.openOptions();
+    apiOpenOptions.addEventListener("click", async () => {
+        await text_to_speech.openFileManager(LiteLoader.plugins["text_to_speech"].path.data);
     });
 
     apiReloadOptions.addEventListener("click", async () => {
@@ -181,7 +181,7 @@ export const onSettingWindowCreated = async view => {
     const apply = view.querySelector(".text_to_speech .apply");
 
     // 设置默认值
-    api_input.value = JSON.stringify(options.host);
+    api_input.value = options.host;
 
     reset.addEventListener("click", async () => {
         api_input.value = "https://artrajz-vits-simple-api.hf.space/voice/vits";

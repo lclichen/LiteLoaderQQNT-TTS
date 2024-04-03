@@ -1,6 +1,7 @@
 // 运行在 Electron 主进程 下的插件入口
 const { ipcMain } = require("electron");
 const fs = require("fs");
+const os = require('os');
 const path = require("path");
 const util = require('util');
 const exec = util.promisify(require("child_process").exec);
@@ -33,9 +34,9 @@ async function convertToWAV(file, fileOutput) {
     }
 }
 
-const simpleFile = path.join(LiteLoader.plugins.text_to_speech.path.plugin, "config/settings.json");
-const dataPath = LiteLoader.plugins.text_to_speech.path.data;
-const configFile = path.join(LiteLoader.plugins.text_to_speech.path.data, "config.json");
+const simpleFile = path.join(LiteLoader.plugins["text_to_speech"].path.plugin, "config", "settings.json");
+const dataPath = LiteLoader.plugins["text_to_speech"].path.data;
+const configFile = path.join(LiteLoader.plugins["text_to_speech"].path.data, "config.json");
 
 module.exports.onBrowserWindowCreated = (window) => {
     // 创建数据文件夹
@@ -48,27 +49,40 @@ module.exports.onBrowserWindowCreated = (window) => {
     }
 };
 
-ipcMain.handle(
-    // 读取配置文件
-    "LiteLoader.text_to_speech.getOptions",
-    (event, message) => {
-        try {
-            const data = fs.readFileSync(configFile, "utf-8");
-            const config = JSON.parse(data);
-            return config;
-        } catch (error) {
-            logger.error(error);
-            return {};
-        }
+async function openFileManager(path) {
+    let command;
+    path = JSON.stringify(path);
+    switch (os.platform()) {
+        case 'win32':
+            command = `start "" "${path}"`;
+            break;
+        case 'darwin':
+            command = `open "${path}"`;
+            break;
+        case 'linux':
+            command = `xdg-open "${path}"`;
+            break;
+        default:
+            throw new Error('Unsupported platform:', os.platform());
     }
-);
+
+    try {
+        const { stdout, stderr } = await exec(command);
+        logger.info('File manager opened successfully.');
+        if (stderr) {
+            logger.error('Stderr:', stderr);
+        }
+    } catch (error) {
+        logger.error('Error:', error);
+    }
+}
 
 ipcMain.handle(
     // 打开配置文件所在文件夹/打开配置文件
-    "LiteLoader.text_to_speech.openOptions",
-    () => {
+    "LiteLoader.text_to_speech.openFileManager",
+    async (event, path) => {
         try {
-            LiteLoader.api.openPath(dataPath);
+            await openFileManager(path);;
         } catch (error) {
             logger.error(error);
         }
