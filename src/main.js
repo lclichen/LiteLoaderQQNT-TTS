@@ -51,7 +51,6 @@ module.exports.onBrowserWindowCreated = (window) => {
 
 async function openFileManager(path) {
     let command;
-    path = JSON.stringify(path);
     switch (os.platform()) {
         case 'win32':
             command = `start "" "${path}"`;
