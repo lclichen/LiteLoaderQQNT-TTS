@@ -101,7 +101,7 @@ observeElement2(".chat-func-bar", function () {
         noticeElementChild.textContent = "转换中..."
         noticeElement.appendChild(noticeElementChild)
         barIcon.firstChild.appendChild(noticeElement)
-        const options = await text_to_speech.getOptions();
+        const options = await LiteLoader.api.config.get("text_to_speech");
         const buffer = await callTTS(sourceText, "中文", options);
         const result = await text_to_speech.saveFile(`tts.${options.default_params[options.host_type].format}`, buffer);
         // 这一步应该增加格式转换功能
