@@ -36,7 +36,7 @@ QQNT的设置中暂时只支持更换接口地址。
 
 1. 整体结构参考了[DeepL插件](https://github.com/MUKAPP/LiteLoaderQQNT-DeepL/)。
 
-2. 格式转换参考了[Audio-Sender插件]。
+2. 格式转换参考了[Audio-Sender插件](https://github.com/xtaw/LiteLoaderQQNT-Audio-Sender)。
 
 ****
 

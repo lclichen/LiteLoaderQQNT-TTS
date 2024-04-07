@@ -81,7 +81,7 @@ ipcMain.handle(
     "LiteLoader.text_to_speech.openFileManager",
     async (event, path) => {
         try {
-            await openFileManager(path);;
+            await openFileManager(path);
         } catch (error) {
             logger.error(error);
         }
