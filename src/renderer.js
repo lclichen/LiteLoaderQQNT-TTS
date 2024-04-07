@@ -101,7 +101,7 @@ observeElement2(".chat-func-bar", function () {
         noticeElementChild.textContent = "转换中..."
         noticeElement.appendChild(noticeElementChild)
         barIcon.firstChild.appendChild(noticeElement)
-        const options = await text_to_speech.getOptions();
+        const options = await LiteLoader.api.config.get("text_to_speech");
         const buffer = await callTTS(sourceText, "中文", options);
         const result = await text_to_speech.saveFile(`tts.${options.default_params[options.host_type].format}`, buffer);
         // 这一步应该增加格式转换功能
@@ -166,8 +166,8 @@ export const onSettingWindowCreated = async view => {
     const apiReloadOptions = view.querySelector(".text_to_speech .reload");
 
 
-    apiOpenOptions.addEventListener("click", () => {
-        text_to_speech.openOptions();
+    apiOpenOptions.addEventListener("click", async () => {
+        await text_to_speech.openFileManager(LiteLoader.plugins["text_to_speech"].path.data);
     });
 
     apiReloadOptions.addEventListener("click", async () => {
@@ -181,7 +181,7 @@ export const onSettingWindowCreated = async view => {
     const apply = view.querySelector(".text_to_speech .apply");
 
     // 设置默认值
-    api_input.value = JSON.stringify(options.host);
+    api_input.value = options.host;
 
     reset.addEventListener("click", async () => {
         api_input.value = "https://artrajz-vits-simple-api.hf.space/voice/vits";
