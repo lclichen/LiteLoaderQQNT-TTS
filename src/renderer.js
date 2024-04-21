@@ -1,3 +1,6 @@
+// 导入 https://github.com/xtaw/LiteLoaderQQNT-Euphony 作为 LLAPI 的替代
+import { Contact, Audio } from '../LiteLoaderQQNT-Euphony/src/index.js';
+
 // 运行在 Electron 渲染进程 下的页面脚本
 const pluginPath = LiteLoader.plugins["text_to_speech"].path.plugin;
 
@@ -90,56 +93,47 @@ observeElement2(".chat-func-bar", function () {
 
     // 给barIcon添加点击事件
     barIcon.addEventListener("click", async () => {
-        const peer = await LLAPI.getPeer();
+        const currentContact = Contact.getCurrentContact();
         const content = document.querySelector('.ck-editor__editable');
         const sourceText = content.innerText;
         var noticeElement = document.createElement('div');
         noticeElement.className = "q-tooltips__content q-tooltips__bottom";
         noticeElement.style = "bottom: -31px; transform: translateX(-50%); left: 50%;";
         var noticeElementChild = document.createElement('div');
-        noticeElementChild.className = "primary-content"
-        noticeElementChild.textContent = "转换中..."
-        noticeElement.appendChild(noticeElementChild)
-        barIcon.firstChild.appendChild(noticeElement)
+        noticeElementChild.className = "primary-content";
+        noticeElementChild.textContent = "转换中...";
+        noticeElement.appendChild(noticeElementChild);
+        barIcon.firstChild.appendChild(noticeElement);
         const options = await LiteLoader.api.config.get("text_to_speech");
         const buffer = await callTTS(sourceText, "中文", options);
         const result = await text_to_speech.saveFile(`tts.${options.default_params[options.host_type].format}`, buffer);
         // 这一步应该增加格式转换功能
         logger.info(result);
         if (result.res == "success") {
-            const elements = [
-                {
-                    type: "ptt",
-                    file: result.file
-                }
-            ];
-            LLAPI.sendMessage(peer, elements);
+            const silkData = await text_to_speech.getSilk(result.file);
+            logger.info(silkData);
+            currentContact.sendMessage(new Audio(silkData.path, silkData.duration/1024));
         } else {
             logger.warn(result.msg);
         }
-        barIcon.firstChild.removeChild(noticeElement)
+        barIcon.firstChild.removeChild(noticeElement);
     });
 });
 
 document.addEventListener('drop', e => {
     if (document.querySelector(".audio-msg-input") != undefined) {
         e.dataTransfer.files.forEach(async file => {
-            const peer = await LLAPI.getPeer();
+            const currentContact = Contact.getCurrentContact();
             const result = await text_to_speech.convertAndSaveFile(file.path);
             // 这一步应该增加格式转换功能
             logger.info(result);
             if (result.res == "success") {
-                const elements = [
-                    {
-                        type: "ptt",
-                        file: result.file
-                    }
-                ];
-                LLAPI.sendMessage(peer, elements);
+                const silkData = await text_to_speech.getSilk(result.file);
+                logger.info(silkData);
+                currentContact.sendMessage(new Audio(silkData.path, silkData.duration));
             } else {
                 logger.warn(result.msg);
             }
-            audiosender.deleteFile(path);
         });
     }
 });
@@ -150,8 +144,8 @@ export const onSettingWindowCreated = async view => {
     const htmlText = await (await fetch(html_file_path)).text()
     view.insertAdjacentHTML('afterbegin', htmlText)
 
-    // 添加插件图标
-    document.querySelectorAll(".nav-item.liteloader").forEach((node) => {
+    // 添加插件图标 (".nav-item.liteloader") -> (".nav-bar.liteloader > .nav-item")
+    document.querySelectorAll(".nav-bar.liteloader > .nav-item").forEach((node) => {
         // 本插件图标
         if (node.textContent === "文本转语音") {
             node.querySelector(".q-icon").innerHTML = `<svg fill="currentColor" stroke-width="1.5" viewBox="0 0 1092 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M1010.551467 424.925867c0 86.016-65.365333 155.886933-147.0464 166.638933H819.882667c-81.681067-10.752-147.0464-80.622933-147.0464-166.638933H580.266667c0 123.630933 92.603733 231.1168 212.411733 252.6208V785.066667h87.176533v-107.52C999.662933 656.042667 1092.266667 553.915733 1092.266667 424.96h-81.7152z m-76.253867-231.150934C934.2976 140.014933 890.743467 102.4 841.728 102.4a91.204267 91.204267 0 0 0-92.603733 91.374933v91.374934h190.634666V193.774933h-5.461333z m-190.634667 231.150934c0 53.76 43.588267 91.374933 92.603734 91.374933a91.204267 91.204267 0 0 0 92.603733-91.374933V333.550933h-185.207467v91.374934zM464.213333 150.698667L324.266667 10.24l-6.826667-6.826667L314.026667 0l-3.413334 3.413333-6.826666 6.8608-20.48 20.548267-3.413334 3.413333 3.413334 6.8608 13.653333 13.687467 75.093333 75.3664H218.453333c-122.88 6.826667-218.453333 109.568-218.453333 229.444267v10.274133h51.2v-10.24c0-92.501333 75.093333-171.281067 167.253333-178.107733h153.6L296.96 256.853333l-10.24 10.274134-3.413333 6.826666-3.413334 3.447467 3.413334 3.413333 27.306666 27.409067 3.413334 3.413333 3.413333-3.413333 30.72-30.8224 116.053333-116.4288 3.413334-3.413333-3.413334-6.8608zM58.026667 534.254933v130.1504h64.853333v-65.058133h129.706667v359.594667H187.733333V1024h194.56v-65.058133H317.44V599.3472h129.706667v65.058133H512v-130.1504H58.026667z"></path></svg>`;

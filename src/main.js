@@ -5,6 +5,7 @@ const os = require('os');
 const path = require("path");
 const util = require('util');
 const exec = util.promisify(require("child_process").exec);
+const { encode, getDuration } = require("../silk-wasm");
 
 const logger = {
     info: function (...args) {
@@ -36,6 +37,7 @@ async function convertToWAV(file, fileOutput) {
 
 const simpleFile = path.join(LiteLoader.plugins["text_to_speech"].path.plugin, "config", "settings.json");
 const dataPath = LiteLoader.plugins["text_to_speech"].path.data;
+const pttPath = path.join(dataPath, "ptt");
 const configFile = path.join(LiteLoader.plugins["text_to_speech"].path.data, "config.json");
 
 module.exports.onBrowserWindowCreated = (window) => {
@@ -46,6 +48,10 @@ module.exports.onBrowserWindowCreated = (window) => {
     // 在数据文件夹中创建配置文件
     if (!fs.existsSync(configFile)) {
         fs.copyFileSync(simpleFile, configFile);
+    }
+    // 在数据文件夹中创建语音临时文件目录
+    if (!fs.existsSync(pttPath)) {
+        fs.mkdirSync(pttPath, { recursive: true });
     }
 };
 
@@ -75,6 +81,48 @@ async function openFileManager(path) {
         logger.error('Error:', error);
     }
 }
+
+function getFileHeader(filePath) {
+    // 定义要读取的字节数
+    const bytesToRead = 7;
+    try {
+        const buffer = fs.readFileSync(filePath, {
+            encoding: null,
+            flag: "r",
+            length: bytesToRead,
+        });
+
+        const fileHeader = buffer.toString("hex", 0, bytesToRead);
+        return fileHeader;
+    } catch (err) {
+        logger.error("读取文件错误:", err);
+        return;
+    }
+}
+
+ipcMain.handle("LiteLoader.text_to_speech.getSilk", async (event, filePath) => {
+    try {
+        const fileName = path.basename(filePath);
+        const pcm = fs.readFileSync(filePath);
+        if (getFileHeader(filePath) !== "02232153494c4b") {
+            const silk = await encode(pcm, 24000);
+            fs.writeFileSync(`${pttPath}/${fileName}`, silk.data);
+            return {
+                path: `${pttPath}/${fileName}`,
+                duration: silk.duration,
+            };
+        } else {
+            const duration = getDuration(pcm);
+            return {
+                path: filePath,
+                duration: duration,
+            };
+        }
+    } catch (error) {
+        logger.error(error);
+        return { res: "error", msg: error };
+    }
+});
 
 ipcMain.handle(
     // 打开配置文件所在文件夹/打开配置文件
