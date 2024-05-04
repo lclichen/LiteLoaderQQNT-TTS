@@ -59,3 +59,7 @@ gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GP
 3. 在QQ设置中进行动态的配置设置
 4. Mac上的ffmpeg相关问题解决
 5. 自更新功能
+
+## 交流反馈
+
+点击链接加入群聊【TTS问题反馈与接口交流 857365160】：[https://qm.qq.com/q/jMGb3zgiHu](https://qm.qq.com/q/jMGb3zgiHu)
