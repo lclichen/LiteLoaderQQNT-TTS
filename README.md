@@ -8,13 +8,41 @@ LiteLoaderQQNT 文本转语音
 
 ## 安装 | Installation
 
-需为LiteLoaderQQNT手动安装[Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony)插件。
+需为LiteLoaderQQNT安装 [Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony) 依赖。
 
-### 从 Releases 中下载稳定版的方式进行安装
+### 手动安装(从 Releases 中下载稳定版)
 
 - 下载 [最新发布版本](https://github.com/lclichen/LiteLoaderQQNT-TTS/releases/latest) 中的 `text_to_speech.zip`
-- 将压缩包中的内容解压到 [LiteLoaderQQNT](https://github.com/mo-jinran/LiteLoaderQQNT) 数据目录的 `plugins/text_to_speech` 文件夹下
-- 重启 QQNT 安装完成
+- 将压缩包中的内容解压到[数据目录](https://github.com/mo-jinran/LiteLoaderQQNT-Plugin-Template/wiki/1.%E4%BA%86%E8%A7%A3%E6%95%B0%E6%8D%AE%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84#liteloader%E7%9A%84%E6%95%B0%E6%8D%AE%E7%9B%AE%E5%BD%95)下的 `plugins/text_to_speech` 文件夹中
+- 重启 `QQ` 完成安装
+
+完成后的目录结构应该如下:
+
+```
+plugins (所有的插件目录)
+└── text_to_speech (此插件目录)
+    ├── manifest.json (插件元数据)
+    └── ... (其他文件)
+```
+
+### 使用 `LiteLoaderQQNT-PluginInstaller` 插件安装
+
+- 根据 [README](https://github.com/xinyihl/LiteLoaderQQNT-PluginInstaller/blob/main/README.md) 安装 [LiteLoaderQQNT-PluginInstaller](https://github.com/xinyihl/LiteLoaderQQNT-PluginInstaller) 插件，然后选择以下方案之一
+
+#### 1. 通过 `URL Schemes` 跳转 `QQ` 安装插件
+
+- 根据 [README](https://github.com/PRO-2684/protocio/blob/main/README.md) 安装 [Protocio](https://github.com/PRO-2684/protocio) 插件，对 `URL Schemes` 进行解析
+- 点击[链接](llqqnt://plugininstaller/lclichen/LiteLoaderQQNT-TTS/main/manifest.json)，完成安装
+- 或者在[PluginInstaller的插件列表](https://xinyihl.github.io/LiteLoaderQQNT-PluginInstaller/)中寻找需要的插件完成安装
+
+#### 2. 在 `PluginInstaller` 插件内安装
+
+- 打开 `QQ` 的设置页面，切换至 `PluginInstaller` 标签页
+- 输入下方链接，完成安装
+
+```
+https://github.com/lclichen/LiteLoaderQQNT-TTS/blob/main/manifest.json
+```
 
 ## 使用 | Usage
 

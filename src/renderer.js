@@ -130,7 +130,7 @@ document.addEventListener('drop', e => {
             if (result.res == "success") {
                 const silkData = await text_to_speech.getSilk(result.file);
                 logger.info(silkData);
-                currentContact.sendMessage(new Audio(silkData.path, silkData.duration));
+                currentContact.sendMessage(new Audio(silkData.path, silkData.duration/1024));
             } else {
                 logger.warn(result.msg);
             }
