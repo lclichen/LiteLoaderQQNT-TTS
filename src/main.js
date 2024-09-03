@@ -35,23 +35,41 @@ async function convertToWAV(file, fileOutput) {
     }
 }
 
-const simpleFile = path.join(LiteLoader.plugins["text_to_speech"].path.plugin, "config", "settings.json");
+const simpleFile = path.join(LiteLoader.plugins["text_to_speech"].path.plugin, "config", "config.json");
 const dataPath = LiteLoader.plugins["text_to_speech"].path.data;
 const pttPath = path.join(dataPath, "ptt");
 const configFile = path.join(LiteLoader.plugins["text_to_speech"].path.data, "config.json");
+const optionsListFile = path.join(LiteLoader.plugins["text_to_speech"].path.data, "options_list.json")
+const subConfigFolderPath = path.join(LiteLoader.plugins["text_to_speech"].path.data, "subconfigs");
 
 module.exports.onBrowserWindowCreated = (window) => {
     // 创建数据文件夹
     if (!fs.existsSync(dataPath)) {
         fs.mkdirSync(dataPath, { recursive: true });
     }
-    // 在数据文件夹中创建配置文件
-    if (!fs.existsSync(configFile)) {
-        fs.copyFileSync(simpleFile, configFile);
-    }
     // 在数据文件夹中创建语音临时文件目录
     if (!fs.existsSync(pttPath)) {
         fs.mkdirSync(pttPath, { recursive: true });
+    }
+    if (!fs.existsSync(subConfigFolderPath)) {
+        fs.mkdirSync(subConfigFolderPath, { recursive: true });
+        // 在数据文件夹中创建配置文件
+        if (!fs.existsSync(configFile)) {
+            fs.copyFileSync(simpleFile, configFile);
+            fs.copyFileSync(simpleSubFile, path.join(subConfigFolderPath, "default.json"));
+        }
+        // 将旧配置文件备份后创建新配置文件
+        else {
+            let oldOptions = JSON.parse(fs.readFileSync(configFile, "utf-8"));
+            fs.copyFileSync(configFile, path.join(LiteLoader.plugins["text_to_speech"].path.data, "config_backup.json"));
+            let defaultOptions = {
+                "host": oldOptions.host,
+                "host_type": oldOptions.host_type,
+                "params": oldOptions.default_params[oldOptions.host_type],
+            }
+            fs.writeFileSync(path.join(subConfigFolderPath, "default.json"), JSON.stringify(defaultOptions, null, 2));
+            fs.copyFileSync(simpleFile, configFile);
+        }
     }
 };
 
@@ -102,7 +120,7 @@ function getFileHeader(filePath) {
 
 ipcMain.handle("LiteLoader.text_to_speech.getSilk", async (event, filePath) => {
     try {
-        const fileName = path.basename(filePath);
+        const fileName = `${path.basename(filePath)}.silk`;
         const pcm = fs.readFileSync(filePath);
         if (getFileHeader(filePath) !== "02232153494c4b") {
             const silk = await encode(pcm, 24000);
@@ -151,10 +169,10 @@ ipcMain.handle(
                     logger.error(error);
                     return { res: "error", msg: error };
                 }
-                return { res: "success", file: `${filePath}.wav` };
+                return { res: "success", file: `${filePath}.wav`, origin: filePath};
             }
             else {
-                return { res: "success", file: filePath };
+                return { res: "success", file: filePath, origin: filePath};
             }
         } catch (error) {
             logger.error(error);
@@ -177,11 +195,11 @@ ipcMain.handle(
                     logger.error(error);
                     return { res: "error", msg: error };
                 }
-                return { res: "success", file: `${fileNewPath}.wav` };
+                return { res: "success", file: `${fileNewPath}.wav`, origin: filePath};
             }
             else {
                 fs.copyFileSync(filePath, fileNewPath);
-                return { res: "success", file: filePath };
+                return { res: "success", file: filePath, origin: filePath};
             }
         } catch (error) {
             logger.error(error);
@@ -189,3 +207,71 @@ ipcMain.handle(
         }
     }
 )
+
+function extractValidFilenamePart(inputString) {
+    // 定义不能用于文件名的字符
+    const invalidChars = /[<>:"/\\|?*\x00-\x1F]/g;
+    // 替换掉无效字符
+    const validPart = inputString.replace(invalidChars, '_');
+    return validPart.trim();
+}
+
+async function loadConfigFromWeb(url) {
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(`Failed to load config from ${url}:`, error);
+        return null;
+    }
+}
+
+function updateSubConfig(subConfigName, newConfig) {
+    const subConfigPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(subConfigName)}.json`);
+    fs.writeFileSync(subConfigPath, JSON.stringify(newConfig, null, 2));
+}
+
+ipcMain.handle("LiteLoader.text_to_speech.getSubOptions", async (event, subConfigName) => {
+    const subConfigPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(subConfigName)}.json`);
+    const subOptions = fs.readFileSync(subConfigPath, "utf-8");
+    return JSON.parse(subOptions);
+});
+
+ipcMain.handle("LiteLoader.text_to_speech.setSubOptions", async (event, subConfigName, newConfig) => {
+    const subConfigPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(subConfigName)}.json`);
+    fs.writeFileSync(subConfigPath, JSON.stringify(newConfig, null, 2));
+});
+
+ipcMain.handle("LiteLoader.text_to_speech.getSubOptionsList", async (event, force_refresh) => {
+    if (force_refresh || !fs.existsSync(optionsListFile)) {
+        const optionsList = await loadConfigFromWeb('https://tts.marblue.cn/options_list.json');
+        fs.writeFileSync(optionsListFile, JSON.stringify(optionsList, null, 2));
+        return optionsList;
+    } else {
+        const optionsList = fs.readFileSync(optionsListFile, "utf-8");
+        return JSON.parse(optionsList);
+    }
+});
+
+ipcMain.handle("LiteLoader.text_to_speech.fetchSubOptions", async (event, subConfigName, url) => {
+    if(fs.existsSync(`${extractValidFilenamePart(subConfigName)}.json`)) {
+        const subOptions = fs.readFileSync(subConfigName, "utf-8");
+        return JSON.parse(subOptions);
+    } else {
+        const newConfig = await loadConfigFromWeb(url);
+        if (newConfig) {
+            const subConfigPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(subConfigName)}.json`);
+            fs.writeFileSync(subConfigPath, JSON.stringify(newConfig, null, 2));
+        } else {
+            console.error(`Failed to update subConfig ${subConfigName} due to failed fetching.`);
+        }
+        return newConfig;
+    }
+});
+
+ipcMain.handle("LiteLoader.text_to_speech.renameSubOptions", async (_, oldName, newName) => {
+    const oldPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(oldName)}.json`);
+    const newPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(newName)}.json`);
+    fs.renameSync(oldPath, newPath);
+});

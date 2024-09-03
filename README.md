@@ -46,30 +46,23 @@ https://github.com/lclichen/LiteLoaderQQNT-TTS/blob/main/manifest.json
 
 ## 使用 | Usage
 
-1. 打开一个对话界面，在编辑框中键入所希望进行转换的文本，点击编辑框上方的TTS按钮
-2. （Copy From Voice Sender）点击编辑框上方的语音图标，切换到发送语音界面，直接将音频文件拖入聊天窗口即可
+1. TTS功能：打开一个对话界面，在编辑框中键入所希望进行转换的文本，点击编辑框上方的TTS按钮。
+2. TTS发送前预览：在设置中启用TTS预览，生成后将出现一个预览界面（由于前端解码的限制，如果后端返回的音频格式在`wav`、`ogg`、`mp3`以外，可能无法被播放。
+3. 音频发送功能：（Copy From Audio-Sender）点击编辑框上方的语音图标，切换到发送语音界面，直接将音频文件拖入聊天窗口即可。
 
 ## 注意事项 | Notes
 
-建议用户自行填写TTS接口地址，目前支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，在请求中发送文本直接获取音频文件的响应。
+建议用户自行填写TTS接口地址，目前支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，在请求中发送文本，直接获取音频文件的响应。
 
-gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVITS后端API接口（接口更新请自行同步，目前GPT-SoVITS并没有稳定的接口）。
+例如，gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVITS后端API接口（接口更新请自行同步，目前GPT-SoVITS并没有稳定的接口）。
 
-如果向后端请求的音频格式在`silk`、`wav`、`单声道 pcm_s16le`文件以外，则需要配置ffmpeg，用于格式转换。
-**注意，即使后端不解析format参数，也需要保留format参数用于模块解析后端返回的音频格式**
-
-### 自建TTS后端注意事项 | Notes for TTS Server
-
-如果向后端请求的音频格式设置为`silk`的话：
-
-1. python环境下如果使用graiax-silkcoder的话建议安装[本人修改并重新编译的版本](https://github.com/lclichen/graiax-silkcoder/releases/tag/0.3.7)，以支持[QQNT的silk格式](https://github.com/kn007/silk-v3-decoder/pull/85)，并适应音频格式判断方式。
-2. 其他环境请保证接口支持QQNT版本的silk格式输出，否则建议采用其他格式。
+如果向后端请求的音频格式在`silk`以外，则需要配置ffmpeg，用于格式转换。
+**注意，即使后端不解析format参数，也需要保留配置文件中的format参数用于模块解析后端返回的音频格式**
 
 ## 依赖
 
-1. <del>LLAPI>=1.4.0</del> 已经删库，切换消息发送相关依赖到[Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony)。
-2. 需为LiteLoaderQQNT手动安装[Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony)插件。
-3. 将 [ffmpeg (包括 ffprobe)](https://ffmpeg.org) 添加至环境变量。
+1. 需安装[Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony)插件，用于消息发送。
+2. 将 [ffmpeg (包括 ffprobe)](https://ffmpeg.org) 添加至环境变量，用于将非silk格式音频转换到pcm格式，便于后续编码。
 
 ## 参考
 
@@ -78,15 +71,22 @@ gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GP
 
 ## ChangeLog
 
-1. 解决依赖问题
+1. 配置文件结构更新
+2. 增加音频发送前预览功能
 
 ## TODO
 
 1. 支持调用Windows系统语音
-2. 更合理的配置文件
-3. 在QQ设置中进行动态的配置设置
-4. Mac上的ffmpeg相关问题解决
-5. 自更新功能
+2. Mac上的ffmpeg相关问题解决
+3. 更人性化的设置界面
+4. 开放TTS接口，允许其他插件调用
+
+### 自建TTS后端注意事项 | Notes for TTS Server
+
+如果向后端请求的音频格式设置为`silk`的话：
+
+1. python环境下如果使用graiax-silkcoder的话建议安装[本人修改并重新编译的版本](https://github.com/lclichen/graiax-silkcoder/releases/tag/0.3.7)，以支持[QQNT的silk格式](https://github.com/kn007/silk-v3-decoder/pull/85)，并适应音频格式判断方式。
+2. 其他环境请保证接口支持QQNT版本的silk格式输出，否则建议采用其他格式。
 
 ## 交流反馈
 

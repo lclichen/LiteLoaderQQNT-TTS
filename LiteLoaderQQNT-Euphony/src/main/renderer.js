@@ -1,10 +1,16 @@
-import { Contact, Friend, Group, SingleMessage, MessageChain, MessageSource, PlainText, Image, Audio, At, AtAll, Raw, EventChannel, Client, Cache } from '../index.js';
+import { Contact, Friend, Group, Member, SingleMessage, MessageChain, MessageSource, PlainText, Image, Audio, At, AtAll, Raw, EventChannel, Client, Cache, ChatFuncBar, ClientKey, LuckyCard, Base64Util } from '../index.js';
+
+const chatFuncBarCss = document.createElement('link');
+chatFuncBarCss.rel = 'stylesheet';
+chatFuncBarCss.href = `local:///${ LiteLoader.plugins['euphony'].path.plugin }/src/assets/css/chat_func_bar.css`;
+document.head.appendChild(chatFuncBarCss);
 
 Object.defineProperty(window, 'euphony', {
     value: {
         Contact,
         Friend,
         Group,
+        Member,
         SingleMessage,
         MessageChain,
         MessageSource,
@@ -16,7 +22,11 @@ Object.defineProperty(window, 'euphony', {
         Raw,
         EventChannel,
         Client,
-        Cache
+        Cache,
+        ChatFuncBar,
+        ClientKey,
+        LuckyCard,
+        Base64Util
     },
     writable: false
 });

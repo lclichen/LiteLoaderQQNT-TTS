@@ -10,4 +10,14 @@ contextBridge.exposeInMainWorld("text_to_speech", {
     convertAndSaveFile: (filePath) => ipcRenderer.invoke('LiteLoader.text_to_speech.convertAndSaveFile', filePath),
     // 由于LLAPI暂停更新了，暂时尝试解除对LLAPI的依赖
     getSilk: (path) => ipcRenderer.invoke("LiteLoader.text_to_speech.getSilk", path),
+    // 获取子配置文件
+    getSubOptions: (subConfigName) => ipcRenderer.invoke("LiteLoader.text_to_speech.getSubOptions", subConfigName),
+    // 更新子配置文件
+    setSubOptions: (subConfigName, options) => ipcRenderer.invoke("LiteLoader.text_to_speech.setSubOptions", subConfigName, options),
+    // 加载子配置模板列表
+    getSubOptionsList: (force_refresh) => ipcRenderer.invoke("LiteLoader.text_to_speech.getSubOptionsList", force_refresh),
+    // 加载子配置模板
+    fetchSubOptions: (subConfigName, url) => ipcRenderer.invoke("LiteLoader.text_to_speech.fetchSubOptions", subConfigName, url),
+    // 子配置重命名
+    renameSubOptions: (oldName, newName) => ipcRenderer.invoke("LiteLoader.text_to_speech.renameSubOptions", oldName, newName),
 }, { readonly: true });

@@ -1,6 +1,7 @@
 import Contact from './contact/contact.js';
 import Friend from './contact/friend.js';
 import Group from './contact/group.js';
+import Member from './contact/member.js';
 
 import SingleMessage from './message/single_message.js';
 import MessageChain from './message/message_chain.js';
@@ -17,12 +18,20 @@ import EventChannel from './event/event_channel.js';
 
 import Client from './client/client.js';
 
-import Cache from './cache/cache.js';
+import Cache from './util/cache.js';
+
+import ChatFuncBar from './client/ui/chat_func_bar.js';
+
+import ClientKey from './model/client_key.js';
+import LuckyCard from './model/lucky_card.js';
+
+import Base64Util from './util/base64_util.js';
 
 export {
     Contact,
     Friend,
     Group,
+    Member,
     SingleMessage,
     MessageChain,
     MessageSource,
@@ -34,5 +43,9 @@ export {
     Raw,
     EventChannel,
     Client,
-    Cache
+    Cache,
+    ChatFuncBar,
+    ClientKey,
+    LuckyCard,
+    Base64Util
 }
