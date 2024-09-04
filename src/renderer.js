@@ -171,7 +171,12 @@ observeElement2(".chat-func-bar", function () {
         // 将buffer通过ffmpeg转换为pcm格式
         let result = null;
         try {
-            result = await text_to_speech.saveFile(`tts@${Date.now()}.${currentOption.params.format}`, buffer);
+            if (mainOption.enableTTSCache) {
+                result = await text_to_speech.saveFile(`tts@${Date.now()}.${currentOption.params.format}`, buffer);
+            }
+            else {
+                result = await text_to_speech.saveFile(`tts.${currentOption.params.format}`, buffer);
+            }
         } catch (error) {
             logger.error("[转换出错][格式转换不成功，请检查ffmpeg配置]", error);
         }
@@ -321,6 +326,7 @@ export const onSettingWindowCreated = async view => {
     const apiOpenOptions = view.querySelector(".text_to_speech .open");
     const apiReloadOptions = view.querySelector(".text_to_speech .reload");
     const enableTTSPreview = view.querySelector(".text_to_speech .enableTTSPreview");
+    const enableTTSCache = view.querySelector(".text_to_speech .enableTTSCache");
 
 
     apiOpenOptions.addEventListener("click", async () => {
@@ -337,16 +343,24 @@ export const onSettingWindowCreated = async view => {
         }).join("");
         optionsEditing = await text_to_speech.getSubOptions(optionNameEditing);
         enableTTSPreview.classList.toggle("is-active", mainOption.enableTTSPreview);
+        enableTTSCache.classList.toggle("is-active", mainOption.enableTTSCache);
         // 渲染参数到UI
         api_input.value = optionsEditing.host;
         apiType.value = optionsEditing.host_type;
     });
 
     enableTTSPreview.classList.toggle("is-active", mainOption.enableTTSPreview);
+    enableTTSCache.classList.toggle("is-active", mainOption.enableTTSCache);
 
     enableTTSPreview.addEventListener("click", async (event) => {
         const newValue = enableTTSPreview.classList.toggle("is-active");
         mainOption.enableTTSPreview = newValue;
+        await LiteLoader.api.config.set("text_to_speech", mainOption);
+    });
+
+    enableTTSCache.addEventListener("click", async (event) => {
+        const newValue = enableTTSCache.classList.toggle("is-active");
+        mainOption.enableTTSCache = newValue;
         await LiteLoader.api.config.set("text_to_speech", mainOption);
     });
 
@@ -417,6 +431,8 @@ export const onSettingWindowCreated = async view => {
     // 动态参数：params
 
     // 半固定参数：params.source_key
+
+    // 需要强制保持某些必要参数。
 
     // 需要设定一个减号按钮，点击后删除按钮对应的参数输入框
     // 对整体参数，设定一个总的保存按钮，点击后保存所有参数

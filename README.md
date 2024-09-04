@@ -12,7 +12,7 @@ LiteLoaderQQNT 文本转语音
 
 ### 手动安装(从 Releases 中下载稳定版)
 
-- 下载 [最新发布版本](https://github.com/lclichen/LiteLoaderQQNT-TTS/releases/latest) 中的 `text_to_speech.zip`
+- 下载 [最新发布版本](https://github.com/lclichen/LiteLoaderQQNT-TTS/releases/latest) 中的 `text_to_speech-release.zip`
 - 将压缩包中的内容解压到[数据目录](https://github.com/mo-jinran/LiteLoaderQQNT-Plugin-Template/wiki/1.%E4%BA%86%E8%A7%A3%E6%95%B0%E6%8D%AE%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84#liteloader%E7%9A%84%E6%95%B0%E6%8D%AE%E7%9B%AE%E5%BD%95)下的 `plugins/text_to_speech` 文件夹中
 - 重启 `QQ` 完成安装
 
@@ -21,6 +21,8 @@ LiteLoaderQQNT 文本转语音
 ```
 plugins (所有的插件目录)
 └── text_to_speech (此插件目录)
+    ├── src/ (主要代码文件夹)
+    ├── .../ (其他文件夹文件夹)
     ├── manifest.json (插件元数据)
     └── ... (其他文件)
 ```
@@ -46,8 +48,8 @@ https://github.com/lclichen/LiteLoaderQQNT-TTS/blob/main/manifest.json
 
 ## 使用 | Usage
 
-1. TTS功能：打开一个对话界面，在编辑框中键入所希望进行转换的文本，点击编辑框上方的TTS按钮。
-2. TTS发送前预览：在设置中启用TTS预览，生成后将出现一个预览界面（由于前端解码的限制，如果后端返回的音频格式在`wav`、`ogg`、`mp3`以外，可能无法被播放。
+1. TTS功能：打开一个对话界面，在编辑框中键入所希望进行转换的文本，点击编辑框上方的TTS按钮，默认将自动发送转换后的语音。
+2. TTS发送前预览：在设置中启用TTS预览，生成后将出现一个预览界面（由于前端解码的限制，如果后端返回的音频格式在 `wav`、`ogg`、`mp3` 以外，可能无法被播放。）
 3. 音频发送功能：（Copy From Audio-Sender）点击编辑框上方的语音图标，切换到发送语音界面，直接将音频文件拖入聊天窗口即可。
 
 ## 注意事项 | Notes
@@ -57,21 +59,22 @@ https://github.com/lclichen/LiteLoaderQQNT-TTS/blob/main/manifest.json
 例如，gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVITS后端API接口（接口更新请自行同步，目前GPT-SoVITS并没有稳定的接口）。
 
 如果向后端请求的音频格式在`silk`以外，则需要配置ffmpeg，用于格式转换。
-**注意，即使后端不解析format参数，也需要保留配置文件中的format参数用于模块解析后端返回的音频格式**
+**注意，source_key参数用于标记文本所对应的键值，在修改配置时需要保留**
+**注意，format参数用于标记后端返回的音频格式，即使后端不解析本参数，也需要保留用于模块解析**
 
-## 依赖
+## 依赖 | Requirements
 
 1. 需安装[Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony)插件，用于消息发送。
 2. 将 [ffmpeg (包括 ffprobe)](https://ffmpeg.org) 添加至环境变量，用于将非silk格式音频转换到pcm格式，便于后续编码。
 
-## 参考
+## 致谢 | Acknowledgment
 
 1. 整体结构参考了[DeepL插件](https://github.com/MUKAPP/LiteLoaderQQNT-DeepL/)。
 2. 格式转换参考了[Audio-Sender插件](https://github.com/xtaw/LiteLoaderQQNT-Audio-Sender/)。
 
 ## ChangeLog
 
-1. 配置文件结构更新
+1. 配置文件结构更新，支持快速配置切换
 2. 增加音频发送前预览功能
 
 ## TODO

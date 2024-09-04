@@ -1,5 +1,7 @@
 {
     "currentOption":"default",
     "availableOptions":["default"],
+    "enableTTSCache": false,
+    "enableTTSCache": false,
     "enableTTSPreview": false
 }
