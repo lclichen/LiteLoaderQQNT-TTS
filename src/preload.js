@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("text_to_speech", {
     setSubOptions: (subConfigName, options) => ipcRenderer.invoke("LiteLoader.text_to_speech.setSubOptions", subConfigName, options),
     // 加载子配置模板列表
     getSubOptionsList: (force_refresh) => ipcRenderer.invoke("LiteLoader.text_to_speech.getSubOptionsList", force_refresh),
+    // 获取本地可用子配置列表
+    getLocalSubOptionsList: () => ipcRenderer.invoke("LiteLoader.text_to_speech.getLocalSubOptionsList"),
     // 加载子配置模板
     fetchSubOptions: (subConfigName, url) => ipcRenderer.invoke("LiteLoader.text_to_speech.fetchSubOptions", subConfigName, url),
     // 子配置重命名

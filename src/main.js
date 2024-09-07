@@ -71,6 +71,20 @@ module.exports.onBrowserWindowCreated = (window) => {
             fs.copyFileSync(simpleFile, configFile);
         }
     }
+    // 读取子配置文件夹下的可用配置文件，生成可用配置列表
+    let mainOptions = JSON.parse(fs.readFileSync(configFile, "utf-8"));
+    try {
+        // 同步读取文件夹中的所有文件
+        const files = fs.readdirSync(subConfigFolderPath, { withFileTypes: true });
+        // 过滤出.json文件，并生成不含扩展名的文件名列表
+        const jsonFilesNames = files
+            .filter(file => path.extname(file.name) === '.json')
+            .map(file => path.basename(file.name, '.json'));
+        mainOptions.availableOptions = jsonFilesNames;
+        fs.writeFileSync(configFile, JSON.stringify(mainOptions, null, 2), "utf-8");
+    } catch (err) {
+        logger.error('无法读取文件夹:', err);
+    }
 };
 
 async function openFileManager(path) {
@@ -153,6 +167,20 @@ ipcMain.handle(
         }
     }
 );
+
+ipcMain.handle(
+    "LiteLoader.text_to_speech.getLocalSubOptionsList",
+    async (event) => {
+        // 读取子配置文件夹下的可用配置文件，生成可用配置列表
+        // 同步读取文件夹中的所有文件
+        const files = fs.readdirSync(subConfigFolderPath, { withFileTypes: true });
+        // 过滤出.json文件，并生成不含扩展名的文件名列表
+        const jsonFilesNames = files
+            .filter(file => path.extname(file.name) === '.json')
+            .map(file => path.basename(file.name, '.json'));
+        return jsonFilesNames;
+    }
+)
 
 ipcMain.handle(
     // 保存渲染进程获取的数据到数据目录下

@@ -63,7 +63,7 @@
             </setting-item>
             <setting-item data-direction="column">
                 <div>
-                    <setting-text>启用TTS音频预览</setting-text>
+                    <setting-text>启用TTS音频预览(默认关闭)</setting-text>
                     <setting-text style="color:#ff3333">音频预览功能暂时与某些自定义主题存在冲突，会导致QQ崩溃，请勿同时开启。</setting-text>
                     <setting-text data-type="secondary">支持的预览格式（从API直接获取的音频格式）：wav、ogg、MP3<br></setting-text>
                     <setting-text data-type="secondary">启用后需要手动完成发送。<br></setting-text>
@@ -74,7 +74,7 @@
             </setting-item>
             <setting-item data-direction="column">
                 <div>
-                    <setting-text>启用TTS音频缓存</setting-text>
+                    <setting-text>启用TTS音频缓存(默认启用)</setting-text>
                     <setting-text data-type="secondary">启用后将会使用时间戳防止生成音频的覆盖<br></setting-text>
                 </div>
                 <button class="enableTTSCache q-switch">
@@ -87,16 +87,24 @@
                     <setting-text>选择子配置文件(切换时自动重载)</setting-text>
                     <select class="option-select">
                         <option value="currentOption">currentOption</option>
-                        <!-- 你可以动态生成选项 -->
+                        <!-- 动态生成选项 -->
                     </select>
                 </div>
             </setting-item>
 
             <!-- 加载子配置模板列表 -->
-            <setting-item>
+            <!--setting-item>
                 <div>
                     <setting-text>加载子配置模板</setting-text>
                     <setting-button data-type="secondary" class="load-template">加载模板</setting-button>
+                </div>
+            </setting-item-->
+            
+            <!-- 新建空白子配置 -->
+            <setting-item>
+                <div>
+                    <setting-text>新建空白子配置(敬请期待，暂时请手动复制默认子配置文件修改名称)</setting-text>
+                    <setting-button data-type="secondary" class="new-subconfig"><del>新建子配置</del>  | 刷新本地子配置列表</setting-button>
                 </div>
             </setting-item>
         </setting-list>
@@ -146,6 +154,11 @@
             </div>
         </setting-list>
         <setting-list data-direction="column">
+            <div>
+                <div class="add-param-container">
+                    <!-- 添加参数输入框会被JS代码插入到这里 -->
+                </div>
+            </div>
             <setting-item data-direction="column">
                 <div>
                     <setting-button data-type="secondary" class="add-param">增加参数</setting-button>
@@ -154,7 +167,7 @@
             <!-- 总保存按钮 -->
             <setting-item>
                 <div class="save-all-container">
-                    <setting-button data-type="primary" class="save-all">保存子配置文件全部参数</setting-button>
+                    <setting-button data-type="primary" class="save-all">保存当前子配置文件参数</setting-button>
                 </div>
             </setting-item>
         </setting-list>

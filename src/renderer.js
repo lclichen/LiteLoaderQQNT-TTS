@@ -7,6 +7,9 @@ let optionsList = null;
 let mainOption = null;
 let currentOption = null;
 
+let tmpParamKey = "请输入参数Key后点击确认";
+let tmpParamValue = "待修改参数值";
+
 const logger = {
     info: function (...args) {
         console.log(`[Text_to_speech]`, ...args);
@@ -68,10 +71,22 @@ function renderParams(view, optionsEditing) {
         const paramElement = document.createElement("setting-item");
         paramElement.classList.add("param-entry");
         paramElement.setAttribute("data-direction", "row");
+        let desc = ``;
+        switch (paramKey) {
+            case "source_key":
+                desc = `title="source_key用于指示输入内容对应参数的key"`;
+                break;
+            case "format":
+                desc = `title="format用于指示接口返回音频内容的格式"`;
+                break;
+            default:
+                desc = ``;
+                break;
+        }
 
         paramElement.innerHTML = `
             <div class="input-group">
-            <input class="param-key" type="text" value="${paramKey}" readonly />
+            <input class="param-key" ${desc} type="text" value="${paramKey}" readonly />
             <input class="param-value" type="text" value="${paramValue}" />
             <div class="ops-btns">
                 <setting-button data-type="secondary" class="param-remove">移除参数</setting-button>
@@ -83,8 +98,18 @@ function renderParams(view, optionsEditing) {
 
         // 添加删除按钮事件
         paramElement.querySelector(".param-remove").addEventListener("click", () => {
-            delete optionsEditing.params[paramKey];
-            renderParams(view, optionsEditing); // 重新渲染
+            switch (paramKey) {
+                case "source_key":
+                    alert("source_key用于指示输入内容对应参数的key，请勿删除")
+                    break;
+                case "format":
+                    alert("format用于指示接口返回音频内容的格式，请勿删除")
+                    break;
+                default:
+                    delete optionsEditing.params[paramKey];
+                    renderParams(view, optionsEditing); // 重新渲染
+                    break;
+            }
         });
 
         // 更新参数值
@@ -385,6 +410,19 @@ export const onSettingWindowCreated = async view => {
     let optionsEditing = await text_to_speech.getSubOptions(optionNameEditing);
     renderParams(view, optionsEditing);
 
+    // 新建空白子配置
+    const subconfigCreator = view.querySelector(".text_to_speech .new-subconfig")
+    subconfigCreator.addEventListener("click", async () => {
+        // console.log("New Sunconfig.");
+        const jsonFilesNames = await text_to_speech.getLocalSubOptionsList();
+        mainOption.availableOptions = jsonFilesNames;
+        await LiteLoader.api.config.set("text_to_speech", mainOption);
+        optionsList = mainOption.availableOptions;
+        view.querySelector(".text_to_speech .option-select").innerHTML = optionsList.map((optionName) => {
+            return `<option value="${optionName}" ${optionName === optionNameEditing ? "selected" : ""}>${optionName}</option>`;
+        }).join("");
+    })
+
     // TODO:获取模板列表，提供下载模板列表的功能。
 
     // 固定参数：host
@@ -430,27 +468,68 @@ export const onSettingWindowCreated = async view => {
 
     // 动态参数：params
 
-    // 半固定参数：params.source_key
+    // 半固定参数：params.source_key, params.format
+
+    // 本地路径的指定需要字符转义。
 
     // 需要强制保持某些必要参数。
 
     // 需要设定一个减号按钮，点击后删除按钮对应的参数输入框
     // 对整体参数，设定一个总的保存按钮，点击后保存所有参数
 
-    // 新增参数按钮事件，点击后增加一个参数输入框，可以输入参数名和参数值
-    // TODO: 需要修复问题，prompt不支持
+    // 新增参数按钮事件，点击后为当前子配置增加一个参数输入框，可以输入参数Key和参数Value
     const addParamBtn = view.querySelector(".text_to_speech .add-param");
     addParamBtn.addEventListener("click", () => {
-        const paramKey = prompt("请输入参数名：");
-        if (paramKey && !optionsEditing.params[paramKey]) {
-            optionsEditing.params[paramKey] = "";
-            renderParams(view, optionsEditing); // 重新渲染
-        } else {
-            alert("参数名已存在或无效！");
-        }
+        tmpParamKey = "请输入参数Key后点击确认";
+        tmpParamValue = "待修改参数值";
+        const addParamContainer = view.querySelector(".text_to_speech .add-param-container");
+        addParamContainer.innerHTML = ''; // 清空现有参数
+    
+        const addParamElement = document.createElement("setting-item");
+        addParamElement.classList.add("param-entry");
+        addParamElement.setAttribute("data-direction", "row");
+
+        addParamElement.innerHTML = `
+            <div class="input-group">
+            <input class="add-param-key" type="text" value="${tmpParamKey}" />
+            <input class="add-param-value" type="text" value="${tmpParamValue}" />
+            <div class="ops-btns">
+                <setting-button data-type="secondary" class="add-param-confirm">确认添加参数</setting-button>
+            </div>
+            <div class="ops-btns">
+                <setting-button data-type="secondary" class="add-param-remove">取消</setting-button>
+            </div>
+            </div>
+        `;
+
+        addParamContainer.appendChild(addParamElement);
+
+        // 添加确认按钮事件
+        addParamElement.querySelector(".add-param-confirm").addEventListener("click", () => {
+            if (tmpParamKey && !optionsEditing.params[tmpParamKey]) {
+                optionsEditing.params[tmpParamKey] = tmpParamValue;
+                addParamContainer.removeChild(addParamElement);
+                renderParams(view, optionsEditing); // 重新渲染
+            } else {
+                alert("参数名已存在或无效！");
+            }
+        });
+
+        // 添加删除按钮事件
+        addParamElement.querySelector(".add-param-remove").addEventListener("click", () => {
+            addParamContainer.removeChild(addParamElement);
+        });
+
+        // 更新临时参数键/值
+        addParamElement.querySelector(".add-param-key").addEventListener("input", (e) => {
+            tmpParamKey = e.target.value;
+        });
+        addParamElement.querySelector(".add-param-value").addEventListener("input", (e) => {
+            tmpParamValue = e.target.value;
+        });
     });
 
-    // 总的保存按钮事件
+    // 总的子配置保存按钮
     const saveAllBtn = view.querySelector(".text_to_speech .save-all");
     saveAllBtn.addEventListener("click", async () => {
         // 保存所有参数
