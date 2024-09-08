@@ -1,0 +1,28 @@
+name: auto-build
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: build
+        run: |
+          echo "Creating a release zip file..."
+          zip -r text_to_speech.zip config/ LiteLoaderQQNT-Euphony/ silk-wasm/ src/ icon.png manifest.json README.md
+          echo "Done!"
+      - name: Upload Release File
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: text_to_speech.zip
+          body_path: ./release.md
