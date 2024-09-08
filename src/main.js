@@ -41,6 +41,7 @@ const pttPath = path.join(dataPath, "ptt");
 const configFile = path.join(LiteLoader.plugins["text_to_speech"].path.data, "config.json");
 const optionsListFile = path.join(LiteLoader.plugins["text_to_speech"].path.data, "options_list.json")
 const subConfigFolderPath = path.join(LiteLoader.plugins["text_to_speech"].path.data, "subconfigs");
+const simpleSubFile = path.join(LiteLoader.plugins["text_to_speech"].path.plugin, "config", "subconfig.json");
 
 module.exports.onBrowserWindowCreated = (window) => {
     // 创建数据文件夹
@@ -54,11 +55,12 @@ module.exports.onBrowserWindowCreated = (window) => {
     if (!fs.existsSync(subConfigFolderPath)) {
         fs.mkdirSync(subConfigFolderPath, { recursive: true });
         // 在数据文件夹中创建配置文件
+        // 全新安装，直接复制模板到数据目录
         if (!fs.existsSync(configFile)) {
             fs.copyFileSync(simpleFile, configFile);
             fs.copyFileSync(simpleSubFile, path.join(subConfigFolderPath, "default.json"));
         }
-        // 将旧配置文件备份后创建新配置文件
+        // 升级安装，将数据目录中的旧配置文件备份后创建新配置文件
         else {
             let oldOptions = JSON.parse(fs.readFileSync(configFile, "utf-8"));
             fs.copyFileSync(configFile, path.join(LiteLoader.plugins["text_to_speech"].path.data, "config_backup.json"));
