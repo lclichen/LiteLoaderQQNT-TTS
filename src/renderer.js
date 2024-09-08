@@ -168,11 +168,11 @@ observeElement2(".chat-func-bar", function () {
         const currentContact = Contact.getCurrentContact();
         const content = document.querySelector('.ck-editor__editable');
         const sourceText = content.innerText;
+        const noticeElement = document.createElement('div');
+        const noticeElementChild = document.createElement('div');
         if (mainOption.enableTTSPreview) {
-            const noticeElement = document.createElement('div');
             noticeElement.className = "q-tooltips__content q-tooltips__bottom";
             noticeElement.style = "bottom: -31px; transform: translateX(-50%); left: 50%;";
-            const noticeElementChild = document.createElement('div');
             noticeElementChild.id = "tts-notice";
             noticeElementChild.className = "primary-content";
             noticeElementChild.textContent = "转换中...";
