@@ -100,10 +100,10 @@ function renderParams(view, optionsEditing) {
         paramElement.querySelector(".param-remove").addEventListener("click", () => {
             switch (paramKey) {
                 case "source_key":
-                    alert("source_key用于指示输入内容对应参数的key，请勿删除")
+                    alert("source_key用于指示输入内容对应参数的key，请勿删除");
                     break;
                 case "format":
-                    alert("format用于指示接口返回音频内容的格式，请勿删除")
+                    alert("format用于指示接口返回音频内容的格式，请勿删除");
                     break;
                 default:
                     delete optionsEditing.params[paramKey];
@@ -170,6 +170,12 @@ observeElement2(".chat-func-bar", function () {
         const sourceText = content.innerText;
         const noticeElement = document.createElement('div');
         const noticeElementChild = document.createElement('div');
+        if (mainOption == null) {
+            mainOption = await LiteLoader.api.config.get("text_to_speech");
+        }
+        if (currentOption == null) {
+            currentOption = await text_to_speech.getSubOptions(mainOption.currentOption);
+        }
         if (mainOption.enableTTSPreview) {
             noticeElement.className = "q-tooltips__content q-tooltips__bottom";
             noticeElement.style = "bottom: -31px; transform: translateX(-50%); left: 50%;";
@@ -179,12 +185,7 @@ observeElement2(".chat-func-bar", function () {
             noticeElement.appendChild(noticeElementChild);
             barIcon.firstChild.appendChild(noticeElement);
         }
-        if (mainOption == null) {
-            mainOption = await LiteLoader.api.config.get("text_to_speech");
-        }
-        if (currentOption == null) {
-            currentOption = await text_to_speech.getSubOptions(mainOption.currentOption);
-        }
+
         // 调用TTS接口
         let buffer = null;
         try {
@@ -325,8 +326,8 @@ document.addEventListener('drop', e => {
 // 打开设置界面时触发
 export const onSettingWindowCreated = async view => {
     const html_file_path = `local:///${pluginPath}/src/settings.html`;
-    const htmlText = await (await fetch(html_file_path)).text()
-    view.insertAdjacentHTML('afterbegin', htmlText)
+    const htmlText = await (await fetch(html_file_path)).text();
+    view.insertAdjacentHTML('afterbegin', htmlText);
 
     // 添加插件图标 (".nav-item.liteloader") -> (".nav-bar.liteloader > .nav-item")
     document.querySelectorAll(".nav-bar.liteloader > .nav-item").forEach((node) => {
@@ -337,7 +338,6 @@ export const onSettingWindowCreated = async view => {
     });
 
     // 获取配置列表
-
     if (mainOption == null) {
         mainOption = await LiteLoader.api.config.get("text_to_speech");
     }
@@ -469,10 +469,6 @@ export const onSettingWindowCreated = async view => {
     // 动态参数：params
 
     // 半固定参数：params.source_key, params.format
-
-    // 本地路径的指定需要字符转义。
-
-    // 需要强制保持某些必要参数。
 
     // 需要设定一个减号按钮，点击后删除按钮对应的参数输入框
     // 对整体参数，设定一个总的保存按钮，点击后保存所有参数
