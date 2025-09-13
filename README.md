@@ -8,8 +8,6 @@ LiteLoaderQQNT 文本转语音
 
 ## 安装 | Installation
 
-需为LiteLoaderQQNT安装 [Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony) 依赖。
-
 ### 手动安装(从 Releases 中下载稳定版)
 
 - 下载 [最新发布版本](https://github.com/lclichen/LiteLoaderQQNT-TTS/releases/latest) 中的 `text_to_speech-release.zip`
@@ -22,7 +20,7 @@ LiteLoaderQQNT 文本转语音
 plugins (所有的插件目录)
 └── text_to_speech (此插件目录)
     ├── src/ (主要代码文件夹)
-    ├── .../ (其他文件夹文件夹)
+    ├── .../ (其他文件夹)
     ├── manifest.json (插件元数据)
     └── ... (其他文件)
 ```
@@ -54,35 +52,32 @@ https://github.com/lclichen/LiteLoaderQQNT-TTS/blob/main/manifest.json
 
 ## 注意事项 | Notes
 
-建议用户自行填写TTS接口地址，目前支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，在请求中发送文本，直接获取音频文件的响应。
+建议用户自行配置可用的TTS接口地址，默认测试配置中的接口可能会下线。目前支持类似于[simple-vits-api](https://github.com/Artrajz/vits-simple-api)类型的，在请求中发送文本，直接获取音频文件的响应，请求方法可以是GET或POST。
 
-例如，gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVITS后端API接口（接口更新请自行同步，目前GPT-SoVITS并没有稳定的接口）。
+例如，gptsovits的接口格式根据[GPT-SoVITS/api.py](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api.py)中的推理格式构建，请按照该文件中的使用方式启用GPT-SoVITS后端API接口（接口更新请自行同步修改相关参数）。
 
-如果向后端请求的音频格式在`silk`以外，则需要配置ffmpeg，用于格式转换。
 **注意，source_key参数用于标记文本所对应的键值，在修改配置时需要保留**
-**注意，format参数用于标记后端返回的音频格式，即使后端不解析本参数，也需要保留用于模块解析**
+**注意，format参数用于统一标记后端返回的音频格式，即使后端不解析本参数，也需要保留用于模块解析**
 
-## 依赖 | Requirements
-
-1. 需安装[Euphony](https://github.com/xtaw/LiteLoaderQQNT-Euphony)插件，用于消息发送。
-2. 将 [ffmpeg (包括 ffprobe)](https://ffmpeg.org) 添加至环境变量，用于将非silk格式音频转换到pcm格式，便于后续编码。
+需要将 [ffmpeg (包括 ffprobe)](https://ffmpeg.org) 添加至环境变量，用于将非silk格式音频转换到pcm格式，便于后续编码。
 
 ## 致谢 | Acknowledgment
 
 1. 整体结构参考了[DeepL插件](https://github.com/MUKAPP/LiteLoaderQQNT-DeepL/)。
 2. 格式转换参考了[Audio-Sender插件](https://github.com/xtaw/LiteLoaderQQNT-Audio-Sender/)。
+3. 新版本QQ消息发送参考了[轻量工具箱](https://github.com/xiyuesaves/LiteLoaderQQNT-lite_tools)
 
 ## ChangeLog
 
 1. 配置文件结构更新，支持快速配置切换
 2. 增加音频发送前预览功能
+3. 适配最新版本QQNT，完全解除依赖项目
 
 ## TODO
 
 1. 支持调用Windows系统语音
-2. Mac上的ffmpeg相关问题解决
-3. 更人性化的设置界面
-4. 开放TTS接口，允许其他插件调用
+2. 更人性化的设置界面
+3. 开放TTS接口，允许其他插件调用
 
 ### 自建TTS后端注意事项 | Notes for TTS Server
 

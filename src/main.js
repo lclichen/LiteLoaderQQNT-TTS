@@ -6,6 +6,7 @@ const path = require("path");
 const util = require('util');
 const exec = util.promisify(require("child_process").exec);
 const { encode, getDuration } = require("../silk-wasm");
+const crypto = require("crypto");
 
 const logger = {
     info: function (...args) {
@@ -67,6 +68,7 @@ module.exports.onBrowserWindowCreated = (window) => {
             let defaultOptions = {
                 "host": oldOptions.host,
                 "host_type": oldOptions.host_type,
+                "http_type": "get",
                 "params": oldOptions.default_params[oldOptions.host_type],
             }
             fs.writeFileSync(path.join(subConfigFolderPath, "default.json"), JSON.stringify(defaultOptions, null, 2));
@@ -138,18 +140,27 @@ ipcMain.handle("LiteLoader.text_to_speech.getSilk", async (event, filePath) => {
     try {
         const fileName = `${path.basename(filePath)}.silk`;
         const pcm = fs.readFileSync(filePath);
+        const hash = crypto.createHash('md5')
         if (getFileHeader(filePath) !== "02232153494c4b") {
             const silk = await encode(pcm, 24000);
             fs.writeFileSync(`${pttPath}/${fileName}`, silk.data);
+            const fileBuffer = fs.readFileSync(`${pttPath}/${fileName}`)
+            hash.update(fileBuffer)
+            const fileMd5 = hash.digest('hex')
             return {
                 path: `${pttPath}/${fileName}`,
                 duration: silk.duration,
+                fileMd5: fileMd5,
             };
         } else {
             const duration = getDuration(pcm);
+            const fileBuffer = fs.readFileSync(filePath)
+            hash.update(fileBuffer)
+            const fileMd5 = hash.digest('hex')
             return {
                 path: filePath,
                 duration: duration,
+                fileMd5: fileMd5,
             };
         }
     } catch (error) {
@@ -182,7 +193,7 @@ ipcMain.handle(
             .map(file => path.basename(file.name, '.json'));
         return jsonFilesNames;
     }
-)
+);
 
 ipcMain.handle(
     // 保存渲染进程获取的数据到数据目录下
@@ -199,17 +210,39 @@ ipcMain.handle(
                     logger.error(error);
                     return { res: "error", msg: error };
                 }
-                return { res: "success", file: `${filePath}.wav`, origin: filePath};
+                return { res: "success", file: `${filePath}.wav`, origin: filePath };
             }
             else {
-                return { res: "success", file: filePath, origin: filePath};
+                return { res: "success", file: filePath, origin: filePath };
             }
         } catch (error) {
             logger.error(error);
             return { res: "error", msg: error };
         }
     }
-)
+);
+
+ipcMain.handle(
+    'LiteLoader.text_to_speech.readAudioAsBase64',
+    async (event, filePath) => {
+        try {
+            const data = await fs.promises.readFile(filePath);
+            const base64 = data.toString('base64');
+            let mimeType;
+            if (path.extname(filePath) === '.wav') {
+                mimeType = 'audio/wav'; // 根据文件类型判断
+            } else if (path.extname(filePath) === '.ogg') {
+                mimeType = 'audio/ogg'; // 根据文件类型判断
+            } else {
+                mimeType = 'audio/mpeg'; // 默认二进制流
+            }
+            return `data:${mimeType};base64,${base64}`;
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+);
 
 ipcMain.handle(
     // 转换本地文件格式并保存到数据目录下
@@ -225,18 +258,18 @@ ipcMain.handle(
                     logger.error(error);
                     return { res: "error", msg: error };
                 }
-                return { res: "success", file: `${fileNewPath}.wav`, origin: filePath};
+                return { res: "success", file: `${fileNewPath}.wav`, origin: filePath };
             }
             else {
                 fs.copyFileSync(filePath, fileNewPath);
-                return { res: "success", file: filePath, origin: filePath};
+                return { res: "success", file: filePath, origin: filePath };
             }
         } catch (error) {
             logger.error(error);
             return { res: "error", msg: error };
         }
     }
-)
+);
 
 function extractValidFilenamePart(inputString) {
     // 定义不能用于文件名的字符
@@ -257,6 +290,51 @@ async function loadConfigFromWeb(url) {
     }
 }
 
+/**
+ * 检查目录是否存在后复制文件
+ */
+async function copyFileWithDirCheck(oldPath, newPath) {
+    // 获取目标文件路径中的目录部分
+    const dir = path.dirname(newPath)
+    try {
+        // 尝试获取目录信息，如果目录不存在会抛出错误
+        await fs.promises.access(dir, fs.constants.F_OK)
+    } catch (error) {
+        // 如果目录不存在，就创建它
+        await fs.promises.mkdir(dir, { recursive: true })
+    }
+    // 目录存在或者已经成功创建后，执行文件复制操作
+    await fs.promises.copyFile(oldPath, newPath)
+}
+
+ipcMain.handle('LiteLoader.text_to_speech.getPttFileInfo', async (event, filePath) => {
+    try {
+        const hash = crypto.createHash('md5')
+        const fileBuffer = fs.readFileSync(filePath)
+        hash.update(fileBuffer)
+        const fileMd5 = hash.digest('hex')
+        const fileSize = (await fs.promises.stat(filePath)).size
+        return {
+            fileMd5,
+            fileSize
+        }
+    } catch (error) {
+        return {
+            error: `An unknown error occurred. Details: ${error.message}`
+        };
+    }
+});
+
+ipcMain.handle('LiteLoader.text_to_speech.copyFileToCache', async (event, oldPath, newPath) => {
+    try {
+        await copyFileWithDirCheck(oldPath, newPath)
+        return { res: "success", path: newPath };
+    } catch (error) {
+        logger.error(error);
+        return { res: "error", msg: error };
+    }
+});
+
 function updateSubConfig(subConfigName, newConfig) {
     const subConfigPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(subConfigName)}.json`);
     fs.writeFileSync(subConfigPath, JSON.stringify(newConfig, null, 2));
@@ -275,7 +353,7 @@ ipcMain.handle("LiteLoader.text_to_speech.setSubOptions", async (event, subConfi
 
 ipcMain.handle("LiteLoader.text_to_speech.getSubOptionsList", async (event, force_refresh) => {
     if (force_refresh || !fs.existsSync(optionsListFile)) {
-        const optionsList = await loadConfigFromWeb('https://tts.marblue.cn/options_list.json');
+        const optionsList = await loadConfigFromWeb('https://tts.marblue.cn/options/options_list.json');
         fs.writeFileSync(optionsListFile, JSON.stringify(optionsList, null, 2));
         return optionsList;
     } else {
@@ -285,7 +363,7 @@ ipcMain.handle("LiteLoader.text_to_speech.getSubOptionsList", async (event, forc
 });
 
 ipcMain.handle("LiteLoader.text_to_speech.fetchSubOptions", async (event, subConfigName, url) => {
-    if(fs.existsSync(`${extractValidFilenamePart(subConfigName)}.json`)) {
+    if (fs.existsSync(`${extractValidFilenamePart(subConfigName)}.json`)) {
         const subOptions = fs.readFileSync(subConfigName, "utf-8");
         return JSON.parse(subOptions);
     } else {
@@ -304,4 +382,10 @@ ipcMain.handle("LiteLoader.text_to_speech.renameSubOptions", async (_, oldName, 
     const oldPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(oldName)}.json`);
     const newPath = path.join(subConfigFolderPath, `${extractValidFilenamePart(newName)}.json`);
     fs.renameSync(oldPath, newPath);
+});
+
+// 返回窗口id
+ipcMain.on("LiteLoader.text_to_speech.getWebContentId", (event) => {
+    logger.info("获取窗口id", event.sender.id.toString());
+    event.returnValue = event.sender.id.toString();
 });

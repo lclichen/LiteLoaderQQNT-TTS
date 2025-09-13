@@ -1,14 +1,53 @@
-// 导入 https://github.com/xtaw/LiteLoaderQQNT-Euphony 作为 LLAPI 的替代
-import { Contact, Audio } from '../LiteLoaderQQNT-Euphony/src/index.js';
+import { Contact } from './utils/rendererUtils.js';
 
 // 运行在 Electron 渲染进程 下的页面脚本
 const pluginPath = LiteLoader.plugins["text_to_speech"].path.plugin;
+
 let optionsList = null;
 let mainOption = null;
 let currentOption = null;
 
 let tmpParamKey = "请输入参数Key后点击确认";
 let tmpParamValue = "待修改参数值";
+
+// 配置管理工具函数
+const configManager = {
+    async getMainOption() {
+        if (!mainOption) mainOption = await LiteLoader.api.config.get("text_to_speech");
+        return mainOption;
+    },
+    async getOptionsList() {
+        if (!optionsList) {
+            const opt = await this.getMainOption();
+            optionsList = opt.availableOptions;
+        }
+        return optionsList;
+    },
+    async getCurrentOption() {
+        if (!currentOption) {
+            const opt = await this.getMainOption();
+            currentOption = await text_to_speech.getSubOptions(opt.currentOption);
+        }
+        return currentOption;
+    },
+    async setMainOption(opt) {
+        mainOption = opt;
+        await LiteLoader.api.config.set("text_to_speech", mainOption);
+    },
+    async setCurrentOption(optName) {
+        mainOption.currentOption = optName;
+        await this.setMainOption(mainOption);
+        currentOption = await text_to_speech.getSubOptions(optName);
+        return currentOption;
+    },
+    async refreshOptionsList() {
+        const jsonFilesNames = await text_to_speech.getLocalSubOptionsList();
+        mainOption.availableOptions = jsonFilesNames;
+        await this.setMainOption(mainOption);
+        optionsList = mainOption.availableOptions;
+        return optionsList;
+    }
+};
 
 const logger = {
     info: function (...args) {
@@ -23,12 +62,25 @@ const logger = {
     }
 };
 
-function callTTS(sourceText, targetLang, optionsCache) {
-    logger.info("转换文本：", sourceText, "到(语言)：", targetLang);
-    logger.info("optionsCache: ", optionsCache);
-    let params = optionsCache.params;
-    params[params.source_key] = sourceText;
-    const url = new URL(optionsCache.host);
+
+function requestPost(hosturl, params) {
+    return fetch(hosturl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+    }).then((response) => {
+        if (!response.ok) {
+            throw new Error(`HTTP error, status = ${response.status}`);
+        }
+        return response.arrayBuffer();
+    })
+}
+
+function requestGet(hosturl, params) {
+    // 处理参数
+    let url = new URL(hosturl);
     let searchParams = new URLSearchParams(params);
     let searchParamsInURL = new URLSearchParams(url.search);
     searchParamsInURL.forEach((value, key) => {
@@ -43,6 +95,22 @@ function callTTS(sourceText, targetLang, optionsCache) {
     })
 }
 
+function callTTS(sourceText, targetLang, optionsCache) {
+    logger.info("转换文本：", sourceText, "到(语言)：", targetLang);
+    logger.info("optionsCache: ", optionsCache);
+    let http_type = optionsCache?.http_type;
+    logger.info("http_type: ", http_type);
+    if (http_type == undefined) {
+        http_type = "get";
+    }
+    let params = optionsCache.params;
+    params[params.source_key] = sourceText;
+    if (http_type == "get") {
+        return requestGet(optionsCache.host, params)
+    } else if (http_type == "post") {
+        return requestPost(optionsCache.host, params)
+    }
+}
 
 // 点击群助手后chat-func-bar会消失，再点群聊才会出现，所以需要再写一个监听
 function observeElement2(selector, callback, callbackEnable = true, interval = 100) {
@@ -61,58 +129,36 @@ function observeElement2(selector, callback, callbackEnable = true, interval = 1
 }
 
 // 渲染动态参数的函数
+
 function renderParams(view, optionsEditing) {
     const paramsContainer = view.querySelector(".text_to_speech .params-container");
-    paramsContainer.innerHTML = ''; // 清空现有参数
-
-    Object.keys(optionsEditing.params || {}).forEach(paramKey => {
-        const paramValue = optionsEditing.params[paramKey];
-
+    paramsContainer.innerHTML = '';
+    Object.entries(optionsEditing.params || {}).forEach(([paramKey, paramValue]) => {
         const paramElement = document.createElement("setting-item");
         paramElement.classList.add("param-entry");
         paramElement.setAttribute("data-direction", "row");
-        let desc = ``;
-        switch (paramKey) {
-            case "source_key":
-                desc = `title="source_key用于指示输入内容对应参数的key"`;
-                break;
-            case "format":
-                desc = `title="format用于指示接口返回音频内容的格式"`;
-                break;
-            default:
-                desc = ``;
-                break;
-        }
-
+        let desc = '';
+        if (paramKey === "source_key") desc = `title="source_key用于指示输入内容对应参数的key"`;
+        if (paramKey === "format") desc = `title="format用于指示接口返回音频内容的格式"`;
         paramElement.innerHTML = `
             <div class="input-group">
-            <input class="param-key" ${desc} type="text" value="${paramKey}" readonly />
-            <input class="param-value" type="text" value="${paramValue}" />
-            <div class="ops-btns">
-                <setting-button data-type="secondary" class="param-remove">移除参数</setting-button>
-            </div>
+                <input class="param-key" ${desc} type="text" value="${paramKey}" readonly />
+                <input class="param-value" type="text" value="${paramValue}" />
+                <div class="ops-btns">
+                    <setting-button data-type="secondary" class="param-remove">移除</setting-button>
+                </div>
             </div>
         `;
-
         paramsContainer.appendChild(paramElement);
-
-        // 添加删除按钮事件
         paramElement.querySelector(".param-remove").addEventListener("click", () => {
-            switch (paramKey) {
-                case "source_key":
-                    alert("source_key用于指示输入内容对应参数的key，请勿删除");
-                    break;
-                case "format":
-                    alert("format用于指示接口返回音频内容的格式，请勿删除");
-                    break;
-                default:
-                    delete optionsEditing.params[paramKey];
-                    renderParams(view, optionsEditing); // 重新渲染
-                    break;
+            if (["source_key", "format"].includes(paramKey)) {
+                alert(`${paramKey}为关键参数，无法删除`);
+            } else {
+                delete optionsEditing.params[paramKey];
+                renderParams(view, optionsEditing);
+                console.log(optionsEditing);
             }
         });
-
-        // 更新参数值
         paramElement.querySelector(".param-value").addEventListener("input", (e) => {
             optionsEditing.params[paramKey] = e.target.value;
         });
@@ -145,17 +191,17 @@ observeElement2(".chat-func-bar", function () {
     const arrowIconChild = document.createElement('i');
     arrowIconChild.className = "q-svg-icon q-icon lite-tools-vue-component vue-component";
     arrowIconChild.id = "tts-bar-icon-arrow";
-    arrowIconChild.setAttribute("bf-toolbar-item","")
-    arrowIconChild.setAttribute("role","button")
-    arrowIconChild.setAttribute("tabindex","-1")
-    arrowIconChild.setAttribute("bf-label-inner","true")
-    arrowIconChild.setAttribute("aria-label","TTS配置选择");
+    arrowIconChild.setAttribute("bf-toolbar-item", "")
+    arrowIconChild.setAttribute("role", "button")
+    arrowIconChild.setAttribute("tabindex", "-1")
+    arrowIconChild.setAttribute("bf-label-inner", "true")
+    arrowIconChild.setAttribute("aria-label", "TTS配置选择");
     arrowIconChild.style = "width: 16px; height: 16px; --234e3e61: inherit;";
 
     arrowIconChild.innerHTML = '<svg viewBox="0 0 16 16"><use xlink:href="/_upper_/resource/icons/setting_24.svg#setting_24"></use></svg>';
 
     arrowIcon.appendChild(arrowIconChild);
-    
+
     // 将barIcon添加到iconBarLeft的最后
     iconBarLeft.appendChild(barIcon);
 
@@ -216,9 +262,9 @@ observeElement2(".chat-func-bar", function () {
                 // 增加预览功能
                 noticeElementChild.textContent = "转换完成.";
                 const audioChild = document.createElement('audio');
-                audioChild.id="audioPlayer";
+                audioChild.id = "audioPlayer";
                 audioChild.setAttribute('controls', true)
-                audioChild.src = result.origin;
+                audioChild.src = await text_to_speech.readAudioAsBase64(result.origin);
                 noticeElement.appendChild(audioChild);
                 const sendButton = document.createElement('button');
                 sendButton.id = "tts-send-button";
@@ -241,14 +287,14 @@ observeElement2(".chat-func-bar", function () {
                 ttsButtonBar.appendChild(regenButton);
                 ttsButtonBar.appendChild(cancelButton);
                 ttsButtonBar.appendChild(sendButton);
-                
+
                 noticeElement.appendChild(ttsButtonBar);
                 noticeElement.addEventListener("click", (e) => {
                     e.stopPropagation();
                 });
 
                 noticeElement.querySelector('#tts-send-button').addEventListener("click", async (e) => {
-                    currentContact.sendMessage(new Audio(silkData.path, silkData.duration/1024));
+                    currentContact.sendPttMessage(silkData);
                     barIcon.firstChild.removeChild(noticeElement);
                     e.stopPropagation();
                 });
@@ -263,7 +309,7 @@ observeElement2(".chat-func-bar", function () {
                 });
             }
             else {
-                currentContact.sendMessage(new Audio(silkData.path, silkData.duration/1024));
+                currentContact.sendPttMessage(silkData);
             }
         } else {
             logger.warn(result.msg);
@@ -315,7 +361,7 @@ document.addEventListener('drop', e => {
             if (result.res == "success") {
                 const silkData = await text_to_speech.getSilk(result.file);
                 logger.info(silkData);
-                currentContact.sendMessage(new Audio(silkData.path, silkData.duration/1024));
+                currentContact.sendPttMessage(silkData);
             } else {
                 logger.warn(result.msg);
             }
@@ -324,69 +370,71 @@ document.addEventListener('drop', e => {
 });
 
 // 打开设置界面时触发
+
 export const onSettingWindowCreated = async view => {
     const html_file_path = `local:///${pluginPath}/src/settings.html`;
     const htmlText = await (await fetch(html_file_path)).text();
     view.insertAdjacentHTML('afterbegin', htmlText);
 
-    // 添加插件图标 (".nav-item.liteloader") -> (".nav-bar.liteloader > .nav-item")
+    // 添加插件图标
     document.querySelectorAll(".nav-bar.liteloader > .nav-item").forEach((node) => {
-        // 本插件图标
         if (node.textContent === "文本转语音") {
             node.querySelector(".q-icon").innerHTML = `<svg fill="currentColor" stroke-width="1.5" viewBox="0 0 1092 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M1010.551467 424.925867c0 86.016-65.365333 155.886933-147.0464 166.638933H819.882667c-81.681067-10.752-147.0464-80.622933-147.0464-166.638933H580.266667c0 123.630933 92.603733 231.1168 212.411733 252.6208V785.066667h87.176533v-107.52C999.662933 656.042667 1092.266667 553.915733 1092.266667 424.96h-81.7152z m-76.253867-231.150934C934.2976 140.014933 890.743467 102.4 841.728 102.4a91.204267 91.204267 0 0 0-92.603733 91.374933v91.374934h190.634666V193.774933h-5.461333z m-190.634667 231.150934c0 53.76 43.588267 91.374933 92.603734 91.374933a91.204267 91.204267 0 0 0 92.603733-91.374933V333.550933h-185.207467v91.374934zM464.213333 150.698667L324.266667 10.24l-6.826667-6.826667L314.026667 0l-3.413334 3.413333-6.826666 6.8608-20.48 20.548267-3.413334 3.413333 3.413334 6.8608 13.653333 13.687467 75.093333 75.3664H218.453333c-122.88 6.826667-218.453333 109.568-218.453333 229.444267v10.274133h51.2v-10.24c0-92.501333 75.093333-171.281067 167.253333-178.107733h153.6L296.96 256.853333l-10.24 10.274134-3.413333 6.826666-3.413334 3.447467 3.413334 3.413333 27.306666 27.409067 3.413334 3.413333 3.413333-3.413333 30.72-30.8224 116.053333-116.4288 3.413334-3.413333-3.413334-6.8608zM58.026667 534.254933v130.1504h64.853333v-65.058133h129.706667v359.594667H187.733333V1024h194.56v-65.058133H317.44V599.3472h129.706667v65.058133H512v-130.1504H58.026667z"></path></svg>`;
         }
     });
 
     // 获取配置列表
-    if (mainOption == null) {
-        mainOption = await LiteLoader.api.config.get("text_to_speech");
+    mainOption = await configManager.getMainOption();
+    optionsList = await configManager.getOptionsList();
+    currentOption = await configManager.getCurrentOption();
+    if (currentOption.http_type == undefined) {
+        console.log("当前配置文件缺少http_type参数，已自动补全为get");
+        currentOption.http_type = "get";
     }
-    if (optionsList == null) {
-        optionsList = mainOption.availableOptions;
-    }
-    if (currentOption == null) {
-        currentOption = await text_to_speech.getSubOptions(mainOption.currentOption);
-    }
-    
+
     const apiOpenOptions = view.querySelector(".text_to_speech .open");
     const apiReloadOptions = view.querySelector(".text_to_speech .reload");
     const enableTTSPreview = view.querySelector(".text_to_speech .enableTTSPreview");
     const enableTTSCache = view.querySelector(".text_to_speech .enableTTSCache");
-
 
     apiOpenOptions.addEventListener("click", async () => {
         await text_to_speech.openFileManager(LiteLoader.plugins["text_to_speech"].path.data);
     });
 
     apiReloadOptions.addEventListener("click", async () => {
-        mainOption = await LiteLoader.api.config.get("text_to_speech");
-        optionsList = mainOption.availableOptions;
-        currentOption = await text_to_speech.getSubOptions(mainOption.currentOption);
+        mainOption = await configManager.getMainOption();
+        optionsList = await configManager.getOptionsList();
+        currentOption = await configManager.getCurrentOption();
         let optionNameEditing = mainOption.currentOption;
         view.querySelector(".text_to_speech .option-select").innerHTML = optionsList.map((optionName) => {
             return `<option value="${optionName}" ${optionName === optionNameEditing ? "selected" : ""}>${optionName}</option>`;
         }).join("");
         optionsEditing = await text_to_speech.getSubOptions(optionNameEditing);
-        enableTTSPreview.classList.toggle("is-active", mainOption.enableTTSPreview);
-        enableTTSCache.classList.toggle("is-active", mainOption.enableTTSCache);
+        enableTTSPreview.toggleAttribute("is-active", mainOption.enableTTSPreview);
+        enableTTSCache.toggleAttribute("is-active", mainOption.enableTTSCache);
         // 渲染参数到UI
+        if (optionsEditing.http_type == undefined) {
+            console.log("当前配置文件缺少http_type参数，已自动补全为get");
+            optionsEditing.http_type = "get";
+        }
         api_input.value = optionsEditing.host;
         apiType.value = optionsEditing.host_type;
+        httpType.value = optionsEditing.http_type;
     });
 
-    enableTTSPreview.classList.toggle("is-active", mainOption.enableTTSPreview);
-    enableTTSCache.classList.toggle("is-active", mainOption.enableTTSCache);
+    enableTTSPreview.toggleAttribute("is-active", mainOption.enableTTSPreview);
+    enableTTSCache.toggleAttribute("is-active", mainOption.enableTTSCache);
 
-    enableTTSPreview.addEventListener("click", async (event) => {
-        const newValue = enableTTSPreview.classList.toggle("is-active");
+    enableTTSPreview.addEventListener("click", async () => {
+        const newValue = enableTTSPreview.toggleAttribute("is-active");
         mainOption.enableTTSPreview = newValue;
-        await LiteLoader.api.config.set("text_to_speech", mainOption);
+        await configManager.setMainOption(mainOption);
     });
 
-    enableTTSCache.addEventListener("click", async (event) => {
-        const newValue = enableTTSCache.classList.toggle("is-active");
+    enableTTSCache.addEventListener("click", async () => {
+        const newValue = enableTTSCache.toggleAttribute("is-active");
         mainOption.enableTTSCache = newValue;
-        await LiteLoader.api.config.set("text_to_speech", mainOption);
+        await configManager.setMainOption(mainOption);
     });
 
     // 选择当前编辑的配置文件
@@ -399,29 +447,29 @@ export const onSettingWindowCreated = async view => {
     }).join("");
     optionSelect.addEventListener("change", async (e) => {
         optionNameEditing = e.target.value;
-        mainOption.currentOption = optionNameEditing;
-        await LiteLoader.api.config.set("text_to_speech", mainOption);
-        optionsEditing = await text_to_speech.getSubOptions(optionNameEditing);
+        currentOption = await configManager.setCurrentOption(optionNameEditing);
+        if (currentOption.http_type == undefined) {
+            console.log("当前配置文件缺少http_type参数，已自动补全为get");
+            currentOption.http_type = "get";
+        }
+        optionsEditing = currentOption;
         renderParams(view, optionsEditing);
         api_input.value = optionsEditing.host;
         apiType.value = optionsEditing.host_type;
+        httpType.value = optionsEditing.http_type;
     });
 
-    let optionsEditing = await text_to_speech.getSubOptions(optionNameEditing);
+    let optionsEditing = currentOption;
     renderParams(view, optionsEditing);
 
-    // 新建空白子配置
-    const subconfigCreator = view.querySelector(".text_to_speech .new-subconfig")
+    // 新建空白子配置/刷新本地子配置列表
+    const subconfigCreator = view.querySelector(".text_to_speech .new-subconfig");
     subconfigCreator.addEventListener("click", async () => {
-        // console.log("New Sunconfig.");
-        const jsonFilesNames = await text_to_speech.getLocalSubOptionsList();
-        mainOption.availableOptions = jsonFilesNames;
-        await LiteLoader.api.config.set("text_to_speech", mainOption);
-        optionsList = mainOption.availableOptions;
+        optionsList = await configManager.refreshOptionsList();
         view.querySelector(".text_to_speech .option-select").innerHTML = optionsList.map((optionName) => {
             return `<option value="${optionName}" ${optionName === optionNameEditing ? "selected" : ""}>${optionName}</option>`;
         }).join("");
-    })
+    });
 
     // TODO:获取模板列表，提供下载模板列表的功能。
 
@@ -439,7 +487,6 @@ export const onSettingWindowCreated = async view => {
         await text_to_speech.setSubOptions(optionNameEditing, optionsEditing);
         alert("已恢复默认 API");
     });
-
     apply.addEventListener("click", async () => {
         optionsEditing.host = api_input.value;
         await text_to_speech.setSubOptions(optionNameEditing, optionsEditing);
@@ -458,7 +505,6 @@ export const onSettingWindowCreated = async view => {
         await text_to_speech.setSubOptions(optionNameEditing, optionsEditing);
         alert("已设置API参数类型");
     });
-
     apiType_reset.addEventListener("click", async () => {
         apiType.value = "vits";
         optionsEditing.host_type = "vits";
@@ -466,57 +512,74 @@ export const onSettingWindowCreated = async view => {
         alert("已恢复默认API参数类型");
     });
 
-    // 动态参数：params
 
-    // 半固定参数：params.source_key, params.format
+    // 固定参数：http_type
+    const httpType = view.querySelector(".text_to_speech .http-type-select");
+    const httpType_apply = view.querySelector(".text_to_speech .http-type-input-apply");
+    const httpType_reset = view.querySelector(".text_to_speech .http-type-input-reset");
 
-    // 需要设定一个减号按钮，点击后删除按钮对应的参数输入框
-    // 对整体参数，设定一个总的保存按钮，点击后保存所有参数
+    // 设置默认值
+    console.log("当前子配置参数：", optionsEditing.http_type);
+    httpType.value = optionsEditing.http_type;
+    // 选择当前子配置中的http_type参数
+    const httpTypeSelect = view.querySelector(".text_to_speech .http-type-select");
 
-    // 新增参数按钮事件，点击后为当前子配置增加一个参数输入框，可以输入参数Key和参数Value
+    httpTypeSelect.innerHTML = [`get`, `post`].map((httpTypeName) => {
+        return `<option value="${httpTypeName}" ${httpTypeName === httpType.value ? "selected" : ""}>${httpTypeName}</option>`;
+    }).join("");
+    httpTypeSelect.addEventListener("change", async (e) => {
+        optionsEditing.http_type = e.target.value;
+        httpType.value = optionsEditing.http_type;
+    });
+
+
+    httpType_apply.addEventListener("click", async () => {
+        optionsEditing.http_type = httpType.value;
+        await text_to_speech.setSubOptions(optionNameEditing, optionsEditing);
+        alert("已设置API参数类型");
+    });
+    httpType_reset.addEventListener("click", async () => {
+        httpType.value = "get";
+        optionsEditing.http_type = "get";
+        await text_to_speech.setSubOptions(optionNameEditing, optionsEditing);
+        alert("已恢复默认API参数类型");
+    });
+
+    // 新增参数按钮事件
     const addParamBtn = view.querySelector(".text_to_speech .add-param");
     addParamBtn.addEventListener("click", () => {
-        tmpParamKey = "请输入参数Key后点击确认";
-        tmpParamValue = "待修改参数值";
+        tmpParamKey = "";
+        tmpParamValue = "";
         const addParamContainer = view.querySelector(".text_to_speech .add-param-container");
-        addParamContainer.innerHTML = ''; // 清空现有参数
-    
+        addParamContainer.innerHTML = '';
         const addParamElement = document.createElement("setting-item");
         addParamElement.classList.add("param-entry");
         addParamElement.setAttribute("data-direction", "row");
-
         addParamElement.innerHTML = `
             <div class="input-group">
-            <input class="add-param-key" type="text" value="${tmpParamKey}" />
-            <input class="add-param-value" type="text" value="${tmpParamValue}" />
-            <div class="ops-btns">
-                <setting-button data-type="secondary" class="add-param-confirm">确认添加参数</setting-button>
-            </div>
-            <div class="ops-btns">
-                <setting-button data-type="secondary" class="add-param-remove">取消</setting-button>
-            </div>
+                <input class="add-param-key" type="text" placeholder="请输入参数Key后点击确认" value="" />
+                <input class="add-param-value" type="text" placeholder="待修改参数值" value="" />
+                <div class="ops-btns">
+                    <setting-button data-type="secondary" class="add-param-confirm">确认</setting-button>
+                </div>
+                <div class="ops-btns">
+                    <setting-button data-type="secondary" class="add-param-remove">取消</setting-button>
+                </div>
             </div>
         `;
-
         addParamContainer.appendChild(addParamElement);
-
-        // 添加确认按钮事件
         addParamElement.querySelector(".add-param-confirm").addEventListener("click", () => {
             if (tmpParamKey && !optionsEditing.params[tmpParamKey]) {
                 optionsEditing.params[tmpParamKey] = tmpParamValue;
                 addParamContainer.removeChild(addParamElement);
-                renderParams(view, optionsEditing); // 重新渲染
+                renderParams(view, optionsEditing);
             } else {
                 alert("参数名已存在或无效！");
             }
         });
-
-        // 添加删除按钮事件
         addParamElement.querySelector(".add-param-remove").addEventListener("click", () => {
             addParamContainer.removeChild(addParamElement);
         });
-
-        // 更新临时参数键/值
         addParamElement.querySelector(".add-param-key").addEventListener("input", (e) => {
             tmpParamKey = e.target.value;
         });
@@ -528,7 +591,6 @@ export const onSettingWindowCreated = async view => {
     // 总的子配置保存按钮
     const saveAllBtn = view.querySelector(".text_to_speech .save-all");
     saveAllBtn.addEventListener("click", async () => {
-        // 保存所有参数
         await text_to_speech.setSubOptions(optionNameEditing, optionsEditing);
         alert("所有参数已保存！");
     });

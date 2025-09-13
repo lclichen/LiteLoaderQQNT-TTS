@@ -18,7 +18,7 @@ jobs:
       - name: build
         run: |
           echo "Creating a release zip file..."
-          zip -r text_to_speech.zip config/ LiteLoaderQQNT-Euphony/ silk-wasm/ src/ icon.png manifest.json README.md
+          zip -r text_to_speech.zip config/ silk-wasm/ src/ icon.png manifest.json README.md
           echo "Done!"
       - name: Upload Release File
         uses: softprops/action-gh-release@v2

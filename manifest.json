@@ -4,17 +4,14 @@
     "type": "extension",
     "name": "文本转语音",
     "slug": "text_to_speech",
-    "description": "基于TTS接口，将输入字符转为语音发送；同时支持直接发送音频文件。",
-    "version": "0.7.3",
+    "description": "通过自定义TTS接口，转换输入为语音发送；同时支持直接发送音频文件。",
+    "version": "0.7.5",
     "icon": "./icon.png",
     "authors": [
         {
             "name": "Mousher Lily",
             "link": "https://github.com/lclichen"
         }
-    ],
-    "dependencies": [
-        "euphony"
     ],
     "platform": [
         "win32",
@@ -30,7 +27,7 @@
         "repo": "lclichen/LiteLoaderQQNT-TTS",
         "branch": "main",
         "release": {
-            "tag": "0.7.3"
+            "tag": "0.7.5"
         }
     }
 }

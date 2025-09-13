@@ -1,176 +1,203 @@
 <style>
-    .text_to_speech a {
-        color: var(--text-link);
+    .text_to_speech {
+        font-family: 'Segoe UI', 'PingFang SC', 'Arial', sans-serif;
+        background: var(--background-primary);
+        padding: 24px 0;
     }
 
-    .text_to_speech input {
-        align-self: normal;
+    .tts-card {
+        background: var(--background-secondary);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        margin-bottom: 24px;
+        padding: 20px 24px;
+        border: 1px solid var(--border-color, #eee);
+    }
+
+    .tts-title {
+        font-size: 1.2em;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .tts-desc {
+        color: var(--text-secondary);
+        font-size: 0.95em;
+        margin-bottom: 12px;
+    }
+
+    .tts-divider {
+        border: none;
+        border-top: 1px solid var(--border-color, #eee);
+        margin: 18px 0;
+    }
+
+    .text_to_speech input,
+    .text_to_speech select {
         flex: 1;
-        border-radius: 4px;
-        margin-right: 12px;
-        padding: 2px 4px;
-        transition: all 100ms ease-out;
+        border-radius: 6px;
+        border: 1px solid var(--border-color, #ddd);
+        padding: 6px 10px;
+        font-size: 1em;
+        background: var(--background-tertiary, #fafafa);
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color 0.2s;
+        margin-right: 10px;
     }
 
-    .text_to_speech input:focus {
-        padding-left: 4px;
-        background-color: var(--overlay_active);
+    .text_to_speech input:focus,
+    .text_to_speech select:focus {
+        border-color: var(--text-link, #409eff);
     }
 
     .text_to_speech .input-group {
         display: flex;
         flex-direction: row;
+        align-items: center;
         margin-top: 8px;
     }
 
-    .text_to_speech .ops-btns>*:not(:last-child) {
-        margin-right: 4px;
+    .text_to_speech .ops-btns {
+        display: flex;
+        gap: 6px;
     }
 
-    /* 设置列表项宽度最大，而不是靠文本撑 */
-    .text_to_speech setting-item>div {
-        width: 100%;
+    .text_to_speech setting-button {
+        font-size: 1em;
+        background: var(--text-link, #409eff);
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-block;
     }
 
-    /* 浅色模式 */
-    @media (prefers-color-scheme: light) {
-        .text_to_speech input {
-            color: black;
+    .text_to_speech setting-button[data-type="secondary"] {
+        background: #f5f5f5;
+        color: var(--text-primary);
+    }
+
+    .text_to_speech setting-button[data-type="primary"] {
+        background: var(--text-link, #409eff);
+        color: #fff;
+    }
+
+    .text_to_speech setting-button:active {
+        filter: brightness(0.95);
+    }
+
+    .text_to_speech .option-select {
+        min-width: 120px;
+        max-width: 220px;
+    }
+
+    .params-container,
+    .add-param-container {
+        margin-top: 8px;
+    }
+
+    .save-all-container {
+        text-align: right;
+        margin-top: 12px;
+    }
+
+    @media (max-width: 600px) {
+        .tts-card {
+            padding: 12px 6px;
         }
-    }
 
-    /* 深色模式 */
-    @media (prefers-color-scheme: dark) {
-        .text_to_speech input {
-            color: white;
+        .text_to_speech input,
+        .text_to_speech select {
+            font-size: 0.95em;
         }
     }
 </style>
 
 <!--关于-->
 
-<setting-section data-title="主配置部分" class="enhancement">
-    <setting-panel>
-        <setting-list data-direction="column">
-            <setting-item data-direction="column">
-                <div>
-                    <setting-text>使用说明</setting-text>
-                    <setting-text data-type="secondary">本插件为文本转语音接口调用插件，推荐自建相关后端使用或接入API。</setting-text>
-                    <setting-text data-type="secondary">请注意：本页面目前仅支持设置接口地址和类型，参数需要到数据文件夹下config.json文件中进行配置。</setting-text>
-                    <setting-button data-type="secondary" class="open">打开配置文件所在文件夹</setting-button>
-                    <setting-button data-type="secondary" class="reload">重载主配置(手动修改后)</setting-button>
-                </div>
-            </setting-item>
-            <setting-item data-direction="column">
-                <div>
-                    <setting-text>启用TTS音频预览(默认关闭)</setting-text>
-                    <setting-text style="color:#ff3333">音频预览功能暂时与某些自定义主题存在冲突，会导致QQ崩溃，请勿同时开启。</setting-text>
-                    <setting-text data-type="secondary">支持的预览格式（从API直接获取的音频格式）：wav、ogg、MP3<br></setting-text>
-                    <setting-text data-type="secondary">启用后需要手动完成发送。<br></setting-text>
-                </div>
-                <button class="enableTTSPreview q-switch">
-                    <span class="q-switch__handle"></span>
-                </button>
-            </setting-item>
-            <setting-item data-direction="column">
-                <div>
-                    <setting-text>启用TTS音频缓存(默认启用)</setting-text>
-                    <setting-text data-type="secondary">启用后将会使用时间戳防止生成音频的覆盖<br></setting-text>
-                </div>
-                <button class="enableTTSCache q-switch">
-                    <span class="q-switch__handle"></span>
-                </button>
-            </setting-item>
-            <!-- 选择当前子配置文件 -->
-            <setting-item>
-                <div>
-                    <setting-text>选择子配置文件(切换时自动重载)</setting-text>
-                    <select class="option-select">
-                        <option value="currentOption">currentOption</option>
-                        <!-- 动态生成选项 -->
-                    </select>
-                </div>
-            </setting-item>
+<div class="text_to_speech">
+    <div class="tts-card">
+        <div class="tts-title">主配置部分</div>
+        <div class="tts-desc">本插件为文本转语音接口调用插件，推荐自建相关后端使用或接入API。<br>本页面仅支持设置接口地址和类型，参数请到 config.json 文件中配置。</div>
+        <div class="input-group">
+            <setting-button data-type="secondary" class="open">打开配置文件所在文件夹</setting-button>
+            <setting-button data-type="secondary" class="reload">重载主配置</setting-button>
+        </div>
+        <hr class="tts-divider">
+        <div class="input-group">
+            <span style="flex:1">启用TTS音频预览</span>
+            <setting-switch class="enableTTSPreview">
+                <span class=""></span>
+            </setting-switch>
+        </div>
+        <div class="tts-desc" style="color:#ff3333">音频预览功能与部分自定义主题冲突，可能导致QQ崩溃，请谨慎开启。</div>
+        <div class="tts-desc">支持预览格式：wav、ogg、MP3。启用后需手动发送。</div>
+        <hr class="tts-divider">
+        <div class="input-group">
+            <span style="flex:1">启用TTS音频缓存</span>
+            <setting-switch class="enableTTSCache">
+                <span class=""></span>
+            </setting-switch>
+        </div>
+        <div class="tts-desc">启用后将使用时间戳防止音频覆盖。</div>
+        <hr class="tts-divider">
+        <div class="input-group">
+            <span style="flex:1">选择子配置文件</span>
+            <select class="option-select">
+                <option value="currentOption">currentOption</option>
+            </select>
+        </div>
+        <div class="input-group" style="margin-top:10px;">
+            <setting-button data-type="secondary" class="new-subconfig">刷新本地子配置列表</setting-button>
+            <span style="font-size:0.95em;color:#888;">如需新建请手动复制默认子配置文件并修改名称</span>
+        </div>
+        <div class="tts-desc" style="margin-top:8px;">或访问 <a
+                href="https://github.com/lclichen/LiteLoaderQQNT-TTS-configs" target="_blank">配置模板仓库</a></div>
+    </div>
 
-            <!-- 加载子配置模板列表 -->
-            <!--setting-item>
-                <div>
-                    <setting-text>加载子配置模板</setting-text>
-                    <setting-button data-type="secondary" class="load-template">加载模板</setting-button>
-                </div>
-            </setting-item-->
-            
-            <!-- 新建空白子配置 -->
-            <setting-item>
-                <div>
-                    <setting-text>新建空白子配置(敬请期待，暂时请手动复制默认子配置文件修改名称)</setting-text>
-                    <setting-text>或访问<a>https://github.com/lclichen/LiteLoaderQQNT-TTS-configs</a></setting-text>
-                    <setting-button data-type="secondary" class="new-subconfig"><del>新建子配置</del>  | 刷新本地子配置列表</setting-button>
-                </div>
-            </setting-item>
-        </setting-list>
-    </setting-panel>
-</setting-section>
-<setting-section data-title="子配置部分" class="enhancement">
-    <setting-panel>
-        <setting-list data-direction="column">
-            <!-- 设置 TTS API 地址 -->
-            <setting-item data-direction="column">
-                <div>
-                    <setting-text>设置 TTS API 地址</setting-text>
-                    <setting-text data-type="secondary">API地址链接中?前的全部内容</setting-text>
-                    <div class="input-group">
-                        <input class="api-input" type="text" spellcheck="false">
-                        <div class="ops-btns">
-                            <setting-button data-type="secondary" class="reset">恢复默认</setting-button>
-                            <setting-button data-type="secondary" class="apply">立即应用</setting-button>
-                        </div>
-                    </div>
-                </div>
-            </setting-item>
-
-            <!-- 设置 TTS API 配置类型 -->
-            <setting-item data-direction="column">
-                <div>
-                    <setting-text>设置 TTS API 配置类型</setting-text>
-                    <setting-text data-type="secondary">填入配置类型</setting-text>
-                    <div class="input-group">
-                        <input class="api-type-input" type="text" spellcheck="false">
-                        <div class="ops-btns">
-                            <setting-button data-type="secondary" class="api-type-input-reset">恢复默认</setting-button>
-                            <setting-button data-type="secondary" class="api-type-input-apply">立即应用</setting-button>
-                        </div>
-                    </div>
-                </div>
-            </setting-item>
-        </setting-list>
-        <br>
-        <!-- 动态参数部分 -->
-        <setting-list data-direction="column">
-            <div>
-                <setting-text>动态参数配置</setting-text>
-                <div class="params-container">
-                    <!-- 动态参数输入框会被JS代码插入到这里 -->
-                </div>
+    <div class="tts-card">
+        <div class="tts-title">子配置部分</div>
+        <div class="input-group">
+            <span style="flex:1">TTS API 地址</span>
+            <input class="api-input" type="text" spellcheck="false" placeholder="请输入API地址">
+            <div class="ops-btns">
+                <setting-button data-type="secondary" class="reset">恢复默认</setting-button>
+                <setting-button data-type="secondary" class="apply">立即应用</setting-button>
             </div>
-        </setting-list>
-        <setting-list data-direction="column">
-            <div>
-                <div class="add-param-container">
-                    <!-- 添加参数输入框会被JS代码插入到这里 -->
-                </div>
+        </div>
+        <div class="tts-desc">API地址链接中?前的全部内容</div>
+        <div class="input-group">
+            <span style="flex:1">TTS API 配置类型</span>
+            <input class="api-type-input" type="text" spellcheck="false" placeholder="如 vits">
+            <div class="ops-btns">
+                <setting-button data-type="secondary" class="api-type-input-reset">恢复默认</setting-button>
+                <setting-button data-type="secondary" class="api-type-input-apply">立即应用</setting-button>
             </div>
-            <setting-item data-direction="column">
-                <div>
-                    <setting-button data-type="secondary" class="add-param">增加参数</setting-button>
-                </div>
-            </setting-item>
-            <!-- 总保存按钮 -->
-            <setting-item>
-                <div class="save-all-container">
-                    <setting-button data-type="primary" class="save-all">保存当前子配置文件参数</setting-button>
-                </div>
-            </setting-item>
-        </setting-list>
-    </setting-panel>
-</setting-section>
+        </div>
+        <div class="tts-desc">填入配置类型，如 vits</div>
+        <div class="input-group">
+            <span style="flex:1">API 请求方式</span>
+            <select class="http-type-select">
+                <option value="get" selected>get</option>
+                <option value="post">post</option>
+            </select>
+            <div class="ops-btns">
+                <setting-button data-type="secondary" class="http-type-input-reset">恢复默认</setting-button>
+                <setting-button data-type="secondary" class="http-type-input-apply">立即应用</setting-button>
+            </div>
+        </div>
+        <div class="tts-desc">选择API接受的请求方式</div>
+        <hr class="tts-divider">
+        <div class="tts-title" style="font-size:1em;margin-bottom:4px;">动态参数配置</div>
+        <div class="params-container"></div>
+        <hr class="tts-divider">
+        <div class="add-param-container"></div>
+        <div class="input-group">
+            <setting-button data-type="secondary" class="add-param">增加参数</setting-button>
+        </div>
+        <div class="save-all-container">
+            <setting-button data-type="primary" class="save-all">保存当前子配置文件参数</setting-button>
+        </div>
+    </div>
+</div>
